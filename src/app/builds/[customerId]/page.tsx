@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BUILDS, getBuildById, getBuildDifferences } from "@/lib/mock-hardware";
 import type { ModuleType } from "@/lib/mock-hardware";
+import { ChassisDiagram } from "@/components/chassis-diagram";
 
 export function generateStaticParams() {
   return BUILDS.map((b) => ({ customerId: b.id }));
@@ -100,6 +101,17 @@ export default async function BuildDetailPage({
         )}
       </div>
 
+      {/* ── Chassis diagram ──────────────────────────────────────── */}
+      <div className="mb-10">
+        <h2 className="font-heading text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+          Front Panel — 3U SpaceVPX Chassis
+        </h2>
+        <ChassisDiagram modules={build.modules}/>
+        <p className="text-xs text-muted-foreground mt-2">
+          Slot layout: GPP Red · GPP Black · Crypto Unit · PSU Red · PSU Black · Expansion · Spare
+        </p>
+      </div>
+
       {/* ── Totals row ───────────────────────────────────────────── */}
       <div className="mb-10 grid gap-4 sm:grid-cols-3">
         <Card>
@@ -135,23 +147,24 @@ export default async function BuildDetailPage({
       </div>
 
       {/* ── Module grid ──────────────────────────────────────────── */}
-      <h2 className="font-heading text-xl font-semibold mb-4 text-foreground">
+      <h2 className="font-heading text-xl font-semibold mb-1 text-foreground">
         Hardware Modules
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <p className="text-xs text-muted-foreground mb-4">
+        Click any module or sub-module chip to view full specs, datasheets, and AI analysis.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {build.modules.map((module) => {
           const isAdded = diff?.added.some((a) => a.id === module.id) ?? false;
 
-          // Find baseline module this swapped out (same type, exists in removed list)
           const swappedOut = isAdded
             ? diff?.removed.find((r) => r.type === module.type) ?? null
             : null;
 
-          // Power / weight delta vs baseline
           const powerDelta = swappedOut
             ? module.powerDraw - swappedOut.powerDraw
             : isAdded
-            ? module.powerDraw       // fully new module — entire draw is the delta
+            ? module.powerDraw
             : null;
 
           const weightDelta = swappedOut
@@ -161,101 +174,94 @@ export default async function BuildDetailPage({
             : null;
 
           return (
-            <Card
+            <div
               key={module.id}
-              className={
+              className={`rounded-md border p-3 ${
                 isAdded
-                  ? "border-primary ring-1 ring-primary/30"
-                  : ""
-              }
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                  : "border-border bg-secondary/30"
+              }`}
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="font-heading text-sm leading-snug">
-                    {module.name}
-                  </CardTitle>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs shrink-0 ${moduleTypeBadgeClass(module.type as ModuleType)}`}
+              {/* Module name + type badge */}
+              <div className="flex items-start justify-between gap-2">
+                {module.detailId ? (
+                  <Link
+                    href={`/modules/${module.detailId}`}
+                    className="flex items-center gap-1 group/link"
                   >
-                    {module.type}
-                  </Badge>
-                </div>
-
-                {isAdded && (
-                  <Badge className="mt-1.5 w-fit text-xs bg-primary/20 text-primary border-primary/30">
-                    {swappedOut ? "Swapped vs Baseline" : "Added vs Baseline"}
-                  </Badge>
+                    <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors leading-snug">
+                      {module.name}
+                    </p>
+                    <span className="text-xs text-muted-foreground group-hover/link:text-primary transition-colors shrink-0">
+                      →
+                    </span>
+                  </Link>
+                ) : (
+                  <p className="text-sm font-medium text-foreground leading-snug">
+                    {module.name}
+                  </p>
                 )}
-              </CardHeader>
+                <Badge
+                  variant="outline"
+                  className={`text-xs shrink-0 ${moduleTypeBadgeClass(module.type as ModuleType)}`}
+                >
+                  {module.type}
+                </Badge>
+              </div>
 
-              <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {module.description}
-                </p>
+              {/* Added / swapped badge */}
+              {isAdded && (
+                <Badge className="mt-1.5 text-xs bg-primary/20 text-primary border-primary/30">
+                  {swappedOut ? "Swapped vs Baseline" : "Added vs Baseline"}
+                </Badge>
+              )}
 
-                {module.subComponents && module.subComponents.length > 0 && (
-                  <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5">
-                    <p className="text-xs text-primary/70 uppercase tracking-widest mb-2">
-                      On-board
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {module.subComponents.map((sc) => (
-                        <div
-                          key={sc.name}
-                          className="rounded border border-primary/25 bg-background/60 px-2 py-1"
-                        >
-                          <p className="text-xs font-medium text-primary leading-none">
-                            {sc.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-none">
-                            {sc.spec}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              {/* Power & weight with deltas */}
+              <p className="text-xs text-muted-foreground mt-1.5">
+                <span className="font-medium text-foreground">{module.powerDraw} W</span>
+                {powerDelta !== null && (
+                  <span className={`ml-1 ${powerDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
+                    ({delta(powerDelta)} W)
+                  </span>
                 )}
+                <span className="mx-1.5">·</span>
+                <span className="font-medium text-foreground">{module.weight} g</span>
+                {weightDelta !== null && (
+                  <span className={`ml-1 ${weightDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
+                    ({delta(weightDelta)} g)
+                  </span>
+                )}
+              </p>
 
-                <div className="flex gap-5 border-t border-border pt-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Power</p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {module.powerDraw} W
-                    </p>
-                    {powerDelta !== null && (
-                      <p
-                        className={`text-xs mt-0.5 ${
-                          powerDelta > 0 ? "text-destructive" : "text-emerald-400"
-                        }`}
+              {/* Sub-component chips */}
+              {module.subComponents && module.subComponents.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {module.subComponents.map((sc) =>
+                    sc.detailId ? (
+                      <Link
+                        key={sc.name}
+                        href={`/modules/${sc.detailId}`}
+                        className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80 hover:bg-primary/20 hover:border-primary/50 transition-colors"
                       >
-                        {delta(powerDelta)} W vs Baseline
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Weight</p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {module.weight} g
-                    </p>
-                    {weightDelta !== null && (
-                      <p
-                        className={`text-xs mt-0.5 ${
-                          weightDelta > 0 ? "text-destructive" : "text-emerald-400"
-                        }`}
+                        {sc.name}
+                      </Link>
+                    ) : (
+                      <span
+                        key={sc.name}
+                        className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground"
                       >
-                        {delta(weightDelta)} g vs Baseline
-                      </p>
-                    )}
-                  </div>
+                        {sc.name}
+                      </span>
+                    )
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {/* ── Removed / not-included modules ───────────────────────── */}
+      {/* ── Not included vs Baseline ──────────────────────────────── */}
       {diff && diff.removed.length > 0 && (
         <div className="mt-10">
           <h2 className="font-heading text-xl font-semibold mb-1 text-muted-foreground">
@@ -264,45 +270,33 @@ export default async function BuildDetailPage({
           <p className="text-xs text-muted-foreground mb-4">
             These baseline modules are replaced or omitted in this configuration.
           </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {diff.removed.map((module) => (
-              <Card key={module.id} className="opacity-50 border-dashed">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="font-heading text-sm leading-snug line-through text-muted-foreground">
-                      {module.name}
-                    </CardTitle>
-                    <Badge
-                      variant="outline"
-                      className="text-xs shrink-0 text-muted-foreground border-muted"
-                    >
-                      {module.type}
-                    </Badge>
-                  </div>
+              <div
+                key={module.id}
+                className="rounded-md border border-dashed border-muted/50 bg-secondary/10 p-3 opacity-50"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-muted-foreground leading-snug line-through">
+                    {module.name}
+                  </p>
                   <Badge
                     variant="outline"
-                    className="mt-1 w-fit text-xs text-muted-foreground border-muted"
+                    className="text-xs shrink-0 text-muted-foreground border-muted"
                   >
-                    Replaced in this build
+                    {module.type}
                   </Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-5">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Power</p>
-                      <p className="text-sm font-semibold text-muted-foreground">
-                        {module.powerDraw} W
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Weight</p>
-                      <p className="text-sm font-semibold text-muted-foreground">
-                        {module.weight} g
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="mt-1.5 text-xs text-muted-foreground border-muted"
+                >
+                  Replaced in this build
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  {module.powerDraw} W · {module.weight} g
+                </p>
+              </div>
             ))}
           </div>
         </div>

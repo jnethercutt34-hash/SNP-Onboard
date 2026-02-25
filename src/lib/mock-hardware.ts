@@ -11,6 +11,8 @@ export interface SubComponent {
   name: string;
   /** Short spec label shown as a chip */
   spec: string;
+  /** If set, clicking this chip navigates to /modules/[detailId] */
+  detailId?: string;
 }
 
 export interface HardwareModule {
@@ -24,6 +26,8 @@ export interface HardwareModule {
   description: string;
   /** On-board components integrated onto this module (not separate line items) */
   subComponents?: SubComponent[];
+  /** If set, the module tile links to /modules/[detailId] */
+  detailId?: string;
 }
 
 export interface SystemBuild {
@@ -61,12 +65,13 @@ const MODULES = {
     weight: 320,
     description:
       "General Purpose Processor card — Red. Quad-core ARM Cortex-A78AE, radiation-hardened SpaceVPX 3U form factor. Carries on-board SDRAM, NVM Flash, and FPGA.",
+    detailId: "gpp-universal",
     subComponents: [
-      { name: "16 GB SDRAM", spec: "LPDDR4X · ECC" },
-      { name: "2 Gb NVM Flash", spec: "Firmware & config" },
-      { name: "FPGA — 1.5M SLC", spec: "Signal processing · FEC" },
-      { name: "10G Optical", spec: "Quad-ch · SFP+ · 1310 nm" },
-      { name: "1G Quad PHY", spec: "4-port GbE PHY" },
+      { name: "16 GB SDRAM", spec: "LPDDR4X · ECC", detailId: "sdram-16gb" },
+      { name: "2 Gb NVM Flash", spec: "Firmware & config", detailId: "nvm-flash-2gb" },
+      { name: "FPGA — 1.5M SLC", spec: "Signal processing · FEC", detailId: "fpga-1m5-slc" },
+      { name: "10G Optical", spec: "Quad-ch · SFP+ · 1310 nm", detailId: "optical-10g" },
+      { name: "1G Quad PHY", spec: "4-port GbE PHY", detailId: "quad-phy-1g" },
     ],
   },
   gpp_b: {
@@ -77,12 +82,13 @@ const MODULES = {
     weight: 320,
     description:
       "General Purpose Processor card — Black. Mirrors Red in hot-standby; carries identical on-board SDRAM, NVM Flash, and FPGA for full redundancy.",
+    detailId: "gpp-universal",
     subComponents: [
-      { name: "16 GB SDRAM", spec: "LPDDR4X · ECC" },
-      { name: "2 Gb NVM Flash", spec: "Firmware & config" },
-      { name: "FPGA — 1.5M SLC", spec: "Signal processing · FEC" },
-      { name: "10G Optical", spec: "Quad-ch · SFP+ · 1310 nm" },
-      { name: "1G Quad PHY", spec: "4-port GbE PHY" },
+      { name: "16 GB SDRAM", spec: "LPDDR4X · ECC", detailId: "sdram-16gb" },
+      { name: "2 Gb NVM Flash", spec: "Firmware & config", detailId: "nvm-flash-2gb" },
+      { name: "FPGA — 1.5M SLC", spec: "Signal processing · FEC", detailId: "fpga-1m5-slc" },
+      { name: "10G Optical", spec: "Quad-ch · SFP+ · 1310 nm", detailId: "optical-10g" },
+      { name: "1G Quad PHY", spec: "4-port GbE PHY", detailId: "quad-phy-1g" },
     ],
   },
   crypto_unit: {
@@ -93,6 +99,7 @@ const MODULES = {
     weight: 130,
     description:
       "Hardware-accelerated encryption/decryption and secure key management. FIPS 140-2 compliant. Offloads cryptographic operations from both GPP cards.",
+    detailId: "crypto-unit",
   },
   psu_red: {
     id: "psu-red",
@@ -102,6 +109,7 @@ const MODULES = {
     weight: 140,
     description:
       "28V primary input brick for the Red side. Regulates and distributes power to the Red GPP card and associated peripherals.",
+    detailId: "psu-red",
     subComponents: [
       { name: "+3.3V_AUX", spec: "Standby rail" },
       { name: "+3.3V", spec: "Logic rail" },
@@ -116,6 +124,7 @@ const MODULES = {
     weight: 155,
     description:
       "28V primary input brick for the Black side. Supplies the Black GPP card and exclusively provides the +12V high-power rail used by the backplane.",
+    detailId: "psu-black",
     subComponents: [
       { name: "+3.3V_AUX", spec: "Standby rail" },
       { name: "+3.3V", spec: "Logic rail" },
@@ -131,6 +140,7 @@ const MODULES = {
     weight: 90,
     description:
       "Dual-channel 10 Gbps copper Ethernet. Reduced SWaP-C profile for pLEO missions with lower radiation-hardening overhead.",
+    detailId: "net-10g-copper",
   },
   timing_atomic: {
     id: "timing-atomic-clock",
@@ -140,6 +150,7 @@ const MODULES = {
     weight: 275,
     description:
       "Precision Timing Module with chip-scale atomic clock (CSAC). Provides nanosecond-level time synchronization for GEO orbital operations.",
+    detailId: "timing-atomic-clock",
   },
 } satisfies Record<string, HardwareModule>;
 

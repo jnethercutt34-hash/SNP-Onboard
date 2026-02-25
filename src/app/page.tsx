@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BUILDS } from "@/lib/mock-hardware";
+import type { HardwareModule } from "@/lib/mock-hardware";
 
 export default function OverviewPage() {
   const baseline = BUILDS.find((b) => b.id === "baseline")!;
@@ -142,27 +143,52 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-6">
-              {baseline.modules.map((module) => (
+              {baseline.modules.map((module: HardwareModule) => (
                 <div
                   key={module.id}
                   className="rounded-md border border-border bg-secondary/30 p-3"
                 >
-                  <p className="text-sm font-medium text-foreground leading-snug">
-                    {module.name}
-                  </p>
+                  {/* Module name — link if detailId exists */}
+                  {module.detailId ? (
+                    <Link
+                      href={`/modules/${module.detailId}`}
+                      className="flex items-center justify-between group"
+                    >
+                      <p className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors">
+                        {module.name}
+                      </p>
+                      <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors ml-1 shrink-0">
+                        →
+                      </span>
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-foreground leading-snug">
+                      {module.name}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">
                     {module.powerDraw} W · {module.weight} g
                   </p>
                   {module.subComponents && module.subComponents.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {module.subComponents.map((sc) => (
-                        <span
-                          key={sc.name}
-                          className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80"
-                        >
-                          {sc.name}
-                        </span>
-                      ))}
+                      {module.subComponents.map((sc) =>
+                        sc.detailId ? (
+                          <Link
+                            key={sc.name}
+                            href={`/modules/${sc.detailId}`}
+                            className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80 hover:bg-primary/20 hover:border-primary/50 transition-colors"
+                          >
+                            {sc.name}
+                          </Link>
+                        ) : (
+                          <span
+                            key={sc.name}
+                            className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground"
+                          >
+                            {sc.name}
+                          </span>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

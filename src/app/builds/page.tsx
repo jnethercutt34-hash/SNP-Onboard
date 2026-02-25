@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { BUILDS, getBuildDifferences } from "@/lib/mock-hardware";
 
 const SHORT_NAME: Record<string, string> = {
@@ -39,7 +38,8 @@ export default function BuildsPage() {
           const diff = isBaseline ? null : getBuildDifferences("baseline", build.id);
 
           return (
-            <Card key={build.id}>
+            <Link key={build.id} href={`/builds/${build.id}`} className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="font-heading text-lg leading-tight">
@@ -171,11 +171,12 @@ export default function BuildsPage() {
                   )}
                 </div>
 
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <Link href={`/builds/${build.id}`}>View Module Details →</Link>
-                </Button>
+                <p className="text-xs text-center text-muted-foreground group-hover:text-primary transition-colors pt-1">
+                  View configuration details →
+                </p>
               </CardContent>
             </Card>
+            </Link>
           );
         })}
       </div>
