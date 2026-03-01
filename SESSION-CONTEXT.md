@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-02-28_
+_Last updated: 2026-03-01_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -17,6 +17,7 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 - **Git identity:** `jnethercutt34 <jnethercutt34@gmail.com>`
 - **Run dev:** `npm run dev`
 - **Type check:** `npx tsc --noEmit`
+- **Network access:** Dev server binds to `0.0.0.0` by default — coworkers on the same LAN can access via the Network URL shown at startup (e.g. `http://192.168.0.118:3000`). Windows Firewall must allow inbound TCP on port 3000.
 
 ---
 
@@ -25,7 +26,7 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 | Route | File | Description |
 |---|---|---|
 | `/` | `src/app/page.tsx` | Overview: hero, architecture cards, chassis diagram, baseline config, mezzanine options, expansion modules |
-| `/builds` | `src/app/builds/page.tsx` | Customer comparison grid — all builds side by side with power/weight/diff |
+| `/builds` | `src/app/builds/page.tsx` | Product lineage diagram + customer comparison grid — all builds side by side with power/weight/diff |
 | `/builds/[customerId]` | `src/app/builds/[customerId]/page.tsx` | Single build detail: chassis SVG, slot manifest, added/removed components vs baseline |
 | `/modules` | `src/app/modules/page.tsx` | Full component catalog, filterable by category |
 | `/modules/[componentId]` | `src/app/modules/[componentId]/page.tsx` | Component detail: specs table, datasheets, sub-modules, related components |
@@ -42,7 +43,7 @@ src/
     layout.tsx                        Global layout + navbar
     page.tsx                          Overview / home
     builds/
-      page.tsx                        Customer comparison grid
+      page.tsx                        Product lineage diagram + customer comparison grid
       [customerId]/page.tsx           Build detail page
     modules/
       page.tsx                        Component catalog
@@ -51,6 +52,7 @@ src/
     api/chat/route.ts                 AI provider routing (mock | internal | gemini)
   components/
     chassis-diagram.tsx               SVG front-panel chassis diagram
+    product-lineage.tsx               SVG product lineage / flow diagram (builds page header)
     answer-card.tsx                   Knowledge base result card
     navbar.tsx                        Site navigation bar
     ui/                               shadcn/ui primitives (badge, button, card, etc.)
@@ -160,8 +162,9 @@ Slot 6: PSU Black
 | `customer-a-pleo` | ABE | pLEO — copper mezzanines both GPPs | 90 W | empty |
 | `customer-b-pleo` | J2 | pLEO — copper mezzanines + Atomic Clock | 103 W | timing-atomic-clock |
 | `customer-c-pleo` | JL | pLEO — copper mezzanines both GPPs | 90 W | empty |
+| `fms-irad` | FMS | IRAD lab prototype — all baseline updates rolled in | 96 W | empty |
 
-**Power math (baseline):** PSU Red (5) + GPP Red (32) + Optical (6) + Crypto (10) + GPP Black (31) + Optical (6) + PSU Black (6) = **96 W**
+**Power math (baseline / FMS):** PSU Red (5) + GPP Red (32) + Optical (6) + Crypto (10) + GPP Black (31) + Optical (6) + PSU Black (6) = **96 W**
 **Power math (J2):** PSU Red (5) + Atomic Clock (13) + GPP Red (32) + Copper (3) + Crypto (10) + GPP Black (31) + Copper (3) + PSU Black (6) = **103 W**
 
 ### Utility Functions (mock-hardware.ts)
@@ -285,7 +288,48 @@ SVG-based front-panel diagram rendered as a React server component. Each VPX slo
 
 ---
 
-## 9. Key Conventions & Rules
+## 9. Product Lineage Diagram (product-lineage.tsx)
+
+SVG infographic rendered at the top of `/builds`. Shows the full SNP product evolution story.
+
+**Layout:**
+- **Main horizontal spine (left → right):** FMS → Baseline → Next Gen
+  - FMS → Baseline: solid blue arrow labeled "all updates"
+  - Baseline → Next Gen: dashed arrow (future/roadmap)
+- **Customer variants:** branch downward from Baseline bottom-center
+  - Vertical trunk + horizontal distributor bar + 3 drop arrows
+  - Junction dot at the T-intersection
+  - Customers in a row: ABE · J2 · JL
+
+**Node styling:**
+- FMS: amber glow, "IRAD" pill badge
+- Baseline: Mission Blue glow, "PRODUCTION" pill badge, taller (hub node)
+- Next Gen: ghost/dashed border, very muted — roadmap placeholder
+- Customers: dark card style, shows power draw
+
+**Colors used** (from globals.css):
+- IRAD amber: `hsl(38 92% 50%)` / `hsl(38 92% 60%)`
+- Primary blue: `hsl(217 91% 60%)` / `hsl(217 91% 75%)`
+- Muted: `hsl(215 20% 38%)` / `hsl(215 20% 55%)`
+- Card bg: `hsl(222 47% 8%)`, border: `hsl(222 47% 22%)`
+
+---
+
+## 10. Builds Page Badge Logic (builds/page.tsx)
+
+Three badge types:
+```typescript
+const isBaseline = build.id === "baseline";
+const isIrad     = build.id === "fms-irad";
+
+// isBaseline  → blue  "Baseline" badge
+// isIrad      → amber "IRAD · Lab" badge
+// otherwise   → secondary "pLEO" badge
+```
+
+---
+
+## 11. Key Conventions & Rules
 
 ### Never Break These
 1. **No GEO** — product is LEO/pLEO only. No GEO references anywhere in UI, descriptions, or data.
@@ -295,10 +339,10 @@ SVG-based front-panel diagram rendered as a React server component. Each VPX slo
 5. **AiResponse optional fields** — `manual`, `source`, `confidence` are optional. Do not make them required.
 
 ### Build ID Convention
-All non-baseline builds use `customer-[letter]-pleo` IDs. The badge in the UI shows `"pLEO"` for all non-baseline builds (the `"pleo" : "GEO"` ternary was removed — all non-baseline are pLEO).
+All non-baseline, non-IRAD builds use `customer-[letter]-pleo` IDs. The badge shows `"pLEO"` for these. FMS uses `fms-irad` and gets an amber IRAD badge.
 
 ### SHORT_NAME Map (builds/page.tsx)
-Maps component IDs → short display labels for badge chips. When adding new components that appear in builds, add entry here:
+Maps component IDs → short display labels for badge chips:
 ```typescript
 const SHORT_NAME: Record<string, string> = {
   "gpp-universal-a":     "GPP Red",
@@ -317,11 +361,10 @@ const SHORT_NAME: Record<string, string> = {
 ```typescript
 serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 ```
-Required so webpack doesn't try to bundle these Node.js file-parsing libraries.
 
 ---
 
-## 10. Dependencies
+## 12. Dependencies
 
 ### Production
 `next@16.1.6`, `react@19.2.3`, `react-dom@19.2.3`, `openai@^6.25.0`, `mammoth@^1.11.0`, `xlsx@^0.18.5`, `pdf-parse@^2.4.5`, `lucide-react`, `radix-ui`, `clsx`, `tailwind-merge`, `class-variance-authority`
@@ -331,28 +374,30 @@ Required so webpack doesn't try to bundle these Node.js file-parsing libraries.
 
 ---
 
-## 11. Git Commit History
+## 13. Git Commit History
 
 ```
-8987e2f  Add SESSION-CONTEXT.md for future agent onboarding
-53625d5  Add AI knowledge base integration, GEO removal, new mezzanine, and document store
-51e40ee  Add component detail pages, chassis diagram, and clickable navigation
-ba1580c  Initial commit — SNP Product HUB (Phases 1–4)
+(this session)   Add FMS IRAD build and product lineage diagram
+8987e2f          Add SESSION-CONTEXT.md for future agent onboarding
+53625d5          Add AI knowledge base integration, GEO removal, new mezzanine, and document store
+51e40ee          Add component detail pages, chassis diagram, and clickable navigation
+ba1580c          Initial commit — SNP Product HUB (Phases 1–4)
 ```
 
 ---
 
-## 12. Known Issues / Pending Work
+## 14. Known Issues / Pending Work
 
-- **pdf-parse v2.4.5** — This version is atypical (npm latest is 1.1.1). It was found in devDependencies originally and has been moved to production dependencies. If PDF parsing fails, verify with `node -e "require('pdf-parse')"`.
-- **Document ingestion cache** — In-memory only. Restarting the dev server or redeploying is required to pick up newly dropped documents.
-- **Placeholder .txt files** — The `PLACE_*_HERE.txt` files in every folder contain only descriptive text (folder purpose + naming examples). They will be ingested as noise if the document store reads them. Consider adding a filename filter to skip `PLACE_*` files in `document-store.ts` once real documents are added.
-- **Gemini provider** — Stubbed in `/api/chat/route.ts`, returns 501. Commented Genkit code is present.
-- **modules/page.tsx** — Not audited this session; may need `modules/` route file if not already present (confirmed it exists in file list above).
+- **pdf-parse v2.4.5** — atypical version (npm latest is 1.1.1). Moved to production deps. If PDF parsing fails, verify with `node -e "require('pdf-parse')"`.
+- **Document ingestion cache** — In-memory only. Restart dev server to pick up newly dropped documents.
+- **Placeholder .txt files** — `PLACE_*_HERE.txt` files in every `public/documents/` subfolder will be ingested as noise when real documents are added. Consider adding a `PLACE_*` filename filter to `document-store.ts`.
+- **Gemini provider** — Stubbed in `/api/chat/route.ts`, returns 501.
+- **FMS build detail page** — `fms-irad` build has no special treatment on the `/builds/[customerId]` detail page beyond the standard diff view vs baseline (which correctly shows 0 changes, same config).
+- **Next Gen node** — Currently a ghost placeholder. As requirements are defined, this should become a real build entry with its own ID and configuration.
 
 ---
 
-## 13. Session Trigger
+## 15. Session Trigger
 
 When the user types **"End of Session"**, always:
 1. Overwrite this file (`SESSION-CONTEXT.md`) with the latest state

@@ -281,6 +281,21 @@ export const BUILDS: SystemBuild[] = [
       { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []               },
     ]
   ),
+
+  // FMS IRAD: Lab prototype — all baseline updates rolled in, currently under test
+  // 5 + (32+6) + 10 + (31+6) + 6 = 96 W  (mirrors baseline)
+  makeBuild(
+    "fms-irad",
+    "FMS",
+    "Internal R&D prototype currently in the lab. Reflects the full baseline configuration with all rolled-in updates. Used for hardware validation, firmware integration testing, and pre-production qualification.",
+    [
+      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []                },
+      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []                },
+      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []                },
+    ]
+  ),
 ];
 
 // ─── Utilities ───────────────────────────────────────────────────────────────

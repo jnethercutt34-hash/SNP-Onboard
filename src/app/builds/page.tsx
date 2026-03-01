@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BUILDS, getBuildDifferences, flattenComponents } from "@/lib/mock-hardware";
+import { ProductLineage } from "@/components/product-lineage";
 
 const SHORT_NAME: Record<string, string> = {
   "gpp-universal-a":     "GPP Red",
@@ -29,10 +30,14 @@ export default function BuildsPage() {
         </p>
       </div>
 
+      {/* ── Product Lineage Diagram ──────────────────────────────── */}
+      <ProductLineage />
+
       {/* ── Comparison Grid ──────────────────────────────────────── */}
       <div className="grid gap-6 lg:grid-cols-3">
         {BUILDS.map((build) => {
           const isBaseline = build.id === "baseline";
+          const isIrad = build.id === "fms-irad";
           const diff = isBaseline ? null : getBuildDifferences("baseline", build.id);
 
           return (
@@ -46,6 +51,10 @@ export default function BuildsPage() {
                   {isBaseline ? (
                     <Badge className="shrink-0 bg-primary/20 text-primary border-primary/30">
                       Baseline
+                    </Badge>
+                  ) : isIrad ? (
+                    <Badge className="shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                      IRAD · Lab
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="shrink-0">
