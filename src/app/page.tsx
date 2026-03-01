@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BUILDS } from "@/lib/mock-hardware";
-import type { HardwareModule } from "@/lib/mock-hardware";
+import type { VPXSlot } from "@/lib/mock-hardware";
 
 export default function OverviewPage() {
   const baseline = BUILDS.find((b) => b.id === "baseline")!;
@@ -21,7 +21,7 @@ export default function OverviewPage() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground leading-relaxed">
           A ruggedized 3U SpaceVPX computing platform for space-borne signal processing,
-          network switching, and cryptographic operations in LEO and GEO mission environments.
+          network switching, and cryptographic operations in LEO mission environments.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
@@ -49,7 +49,7 @@ export default function OverviewPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 VITA 78 SpaceVPX compliant chassis. PCIe Gen 3 ×4 control plane, dual
-                10 Gbps SerDes data lanes per slot. Operating range −40 °C to +85 °C.
+                10 Gbps SerDes data lanes per slot. Operating range −21 °C to +50 °C deck temperature.
                 Radiation-tolerant construction for orbital environments.
               </p>
             </CardContent>
@@ -114,7 +114,7 @@ export default function OverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Expansion slot supports mission-specific modules. GEO deployments add a
+                Expansion slot supports mission-specific modules. Time Managment System deployments add a
                 chip-scale atomic clock (CSAC) for nanosecond-class time synchronization
                 independent of GPS ground references.
               </p>
@@ -124,7 +124,7 @@ export default function OverviewPage() {
       </section>
 
       {/* ── Baseline Specs ───────────────────────────────────────── */}
-      <section>
+      <section className="mb-14">
         <h2 className="font-heading text-2xl font-semibold mb-1 text-foreground">
           Baseline Configuration
         </h2>
@@ -143,19 +143,18 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-6">
-              {baseline.modules.map((module: HardwareModule) => (
+              {baseline.slots.map((slot: VPXSlot) => (
                 <div
-                  key={module.id}
+                  key={slot.baseCard.id}
                   className="rounded-md border border-border bg-secondary/30 p-3"
                 >
-                  {/* Module name — link if detailId exists */}
-                  {module.detailId ? (
+                  {slot.baseCard.detailId ? (
                     <Link
-                      href={`/modules/${module.detailId}`}
+                      href={`/modules/${slot.baseCard.detailId}`}
                       className="flex items-center justify-between group"
                     >
                       <p className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors">
-                        {module.name}
+                        {slot.baseCard.name}
                       </p>
                       <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors ml-1 shrink-0">
                         →
@@ -163,15 +162,15 @@ export default function OverviewPage() {
                     </Link>
                   ) : (
                     <p className="text-sm font-medium text-foreground leading-snug">
-                      {module.name}
+                      {slot.baseCard.name}
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {module.powerDraw} W · {module.weight} g
+                    {slot.baseCard.powerDrawWatts} W · {slot.baseCard.weightGrams} g
                   </p>
-                  {module.subComponents && module.subComponents.length > 0 && (
+                  {slot.attachedMezzanines.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {module.subComponents.map((sc) =>
+                      {slot.attachedMezzanines.map((sc) =>
                         sc.detailId ? (
                           <Link
                             key={sc.name}
@@ -194,44 +193,284 @@ export default function OverviewPage() {
                 </div>
               ))}
             </div>
-
             <div className="flex flex-wrap gap-8 border-t border-border pt-5">
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                  Total Power
-                </p>
-                <p className="font-heading text-3xl font-bold text-primary">
-                  {baseline.totalPower} W
-                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Total Power</p>
+                <p className="font-heading text-3xl font-bold text-primary">{baseline.totalSystemPower} W</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                  Total Weight
-                </p>
-                <p className="font-heading text-3xl font-bold text-accent">
-                  {baseline.totalWeight} g
-                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Total Weight</p>
+                <p className="font-heading text-3xl font-bold text-accent">{baseline.totalSystemWeight} g</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                  Modules
-                </p>
-                <p className="font-heading text-3xl font-bold text-foreground">
-                  {baseline.modules.length}
-                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Modules</p>
+                <p className="font-heading text-3xl font-bold text-foreground">{baseline.slots.length}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                  Spare Slots
-                </p>
-                <p className="font-heading text-3xl font-bold text-muted-foreground">
-                  2
-                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Spare Slots</p>
+                <p className="font-heading text-3xl font-bold text-muted-foreground">{7 - baseline.slots.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
+
+      {/* ── Mezzanine Options ────────────────────────────────────── */}
+      <section className="mb-14">
+        <h2 className="font-heading text-2xl font-semibold mb-1 text-foreground">
+          Mezzanine Options
+        </h2>
+        <p className="text-muted-foreground mb-6 text-sm">
+          XMC mezzanine cards bolt onto each GPP carrier board — one per GPP slot. Select per mission profile.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+          {/* ── 10G Optical ── */}
+          <Link href="/modules/optical-10g" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    10G Optical XMC Mezzanine
+                  </CardTitle>
+                  <Badge className="shrink-0 bg-primary/20 text-primary border-primary/30 text-xs">
+                    Baseline
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  Quad-channel 50 Gbps fiber-optic networking via AirBorn FOCuS VTRFA connector.
+                  Radiation-hardened, sealed optical path. Standard for all baseline builds.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Specs row */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Optical BW",  value: "50 Gbps" },
+                    { label: "Power",       value: "6 W" },
+                    { label: "Weight",      value: "40 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* On-board components */}
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1.5">On-Board</p>
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      { label: "1G Quad PHY",    href: "/modules/quad-phy-1g"   },
+                      { label: "1.2 TB M.2 SSD", href: "/modules/ssd-m2-1p2tb"  },
+                      { label: "64 GB eMMC",      href: "/modules/emmc-64gb"     },
+                    ].map(({ label, href }) => (
+                      <span key={label}
+                        className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* ── 10G Copper ── */}
+          <Link href="/modules/net-10g-copper" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    10G Copper XMC Mezzanine
+                  </CardTitle>
+                  <Badge variant="secondary" className="shrink-0 text-xs">
+                    pLEO
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  Dual-channel 10GBASE-T copper networking via shielded RJ-45. Reduced SWaP-C
+                  profile eliminates fiber management — optimised for proliferated LEO constellations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Specs row */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Copper BW", value: "20 Gbps" },
+                    { label: "Power",     value: "3 W" },
+                    { label: "Weight",    value: "25 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* Savings vs optical */}
+                <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                  <p className="text-xs text-emerald-400 font-semibold uppercase tracking-widest mb-0.5">SWaP-C Savings vs Optical</p>
+                  <p className="text-xs text-muted-foreground">−3 W · −15 g · No fiber management overhead</p>
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* ── 3× QSFP ── */}
+          <Link href="/modules/mez-qsfp-3x" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    3× QSFP XMC Mezzanine
+                  </CardTitle>
+                  <Badge variant="secondary" className="shrink-0 text-xs">
+                    High-Density
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  Three independent QSFP+ cages routing the GPP 10G data-plane lanes.
+                  40 Gbps per port, 120 Gbps aggregate — flexible breakout cabling for payload and rack interconnect.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Specs row */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Agg. BW",  value: "120 Gbps" },
+                    { label: "Power",    value: "8 W" },
+                    { label: "Weight",   value: "55 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* QSFP callout */}
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-0.5">QSFP+ Cages</p>
+                  <p className="text-xs text-muted-foreground">3 × QSFP+ · 4 lanes each · SR4 / LR4 / 4×10G breakout</p>
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+        </div>
+      </section>
+
+      {/* ── Expansion Modules ─────────────────────────────────────── */}
+      <section className="mb-14">
+        <h2 className="font-heading text-2xl font-semibold mb-1 text-foreground">
+          Expansion Modules
+        </h2>
+        <p className="text-muted-foreground mb-6 text-sm">
+          Mission-specific modules that occupy spare VPX slots. Baseline provides 2 spare slots.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+
+          {/* ── Crypto Unit ── */}
+          <Link href="/modules/crypto-unit" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    Cryptographic Processing Unit
+                  </CardTitle>
+                  <Badge className="shrink-0 bg-violet-500/20 text-violet-400 border-violet-500/30 text-xs">
+                    All Builds
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  FIPS 140-2 Level 3 hardware security module. AES-256-GCM at 40 Gbps line rate,
+                  ECC P-384 key exchange, and active tamper-zeroization in under 1 µs.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "AES Throughput", value: "40 Gbps" },
+                    { label: "Power",          value: "10 W" },
+                    { label: "Weight",         value: "130 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {["AES-256-GCM", "SHA-3", "ECC P-384", "RSA-4096", "TRNG"].map((alg) => (
+                    <span key={alg}
+                      className="inline-block rounded border border-violet-500/25 bg-violet-500/10 px-1.5 py-0.5 text-xs text-violet-400/80">
+                      {alg}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* ── Atomic Clock ── */}
+          <Link href="/modules/timing-atomic-clock" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    Timing &amp; Networking Expansion
+                  </CardTitle>
+                  <Badge variant="secondary" className="shrink-0 text-xs">
+                    Expansion
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  Chip-scale atomic clock (CSAC) for nanosecond-class time synchronization
+                  independent of GPS. IEEE 1588v2 PTP Grandmaster. Occupies one spare VPX slot.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Holdover",  value: "< 100 ns/day" },
+                    { label: "Power",     value: "13 W" },
+                    { label: "Weight",    value: "275 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {["10 MHz Ref", "1 PPS", "PTP IEEE 1588v2", "GPS Holdover"].map((feat) => (
+                    <span key={feat}
+                      className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground">
+                      {feat}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+        </div>
+      </section>
+
 
     </main>
   );

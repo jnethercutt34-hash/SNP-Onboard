@@ -1,0 +1,11 @@
+Customer B — GEO Configuration Documents
+=========================================
+Customer B geostationary orbit variant — atomic clock expansion, optical mezzanine.
+
+Examples:
+  CustB-ICD-001_RevA.pdf           — Customer B interface control document
+  CustB-SOW-001_RevA.pdf           — Statement of Work
+  CustB-Proposal-001_RevA.pdf      — Technical and cost proposal
+  CustB-CDR-001_RevA.pdf           — Critical Design Review package
+  CustB-ATP-001_RevA.pdf           — Acceptance test data package
+  CustB-DeliveryNote-001.pdf       — Delivery and shipping documentation

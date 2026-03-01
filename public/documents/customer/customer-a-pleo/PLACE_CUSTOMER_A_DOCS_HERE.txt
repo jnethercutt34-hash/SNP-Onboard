@@ -1,0 +1,11 @@
+Customer A — pLEO Configuration Documents
+==========================================
+Customer A proliferated LEO variant — copper mezzanine, SWaP-C optimised.
+
+Examples:
+  CustA-ICD-001_RevA.pdf           — Customer A interface control document
+  CustA-SOW-001_RevA.pdf           — Statement of Work
+  CustA-Proposal-001_RevA.pdf      — Technical and cost proposal
+  CustA-CDR-001_RevA.pdf           — Critical Design Review package
+  CustA-ATP-001_RevA.pdf           — Acceptance test data package
+  CustA-DeliveryNote-001.pdf       — Delivery and shipping documentation

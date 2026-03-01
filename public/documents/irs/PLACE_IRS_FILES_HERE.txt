@@ -1,0 +1,9 @@
+Interface Requirements Specifications (IRS)
+============================================
+Interface requirements captured before design begins. Parent to the IDD.
+
+Naming: SNP-IRS-<INTERFACE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-IRS-EXTERNAL-001_RevA.pdf    — External system interface requirements
+  SNP-IRS-INTERNAL-002_RevA.pdf    — Internal VPX bus interface requirements

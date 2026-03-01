@@ -23,6 +23,7 @@ function categoryBadgeClass(category: string): string {
     FPGA: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     Networking: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     Expansion: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+    Connector: "bg-slate-500/20 text-slate-300 border-slate-500/30",
   };
   return map[category] ?? "bg-muted/20 text-muted-foreground border-muted";
 }
@@ -90,10 +91,18 @@ function DatasheetCard({ entry }: { entry: DatasheetEntry }) {
           <p className="text-sm text-foreground leading-relaxed">{entry.aiSummary}</p>
         </div>
 
-        {/* Dummy open button */}
-        <Button variant="outline" size="sm" className="w-full" disabled>
-          Open Datasheet (Upload to activate)
-        </Button>
+        {/* Open button — active when a file is available */}
+        {entry.file ? (
+          <Button variant="outline" size="sm" className="w-full" asChild>
+            <a href={entry.file} target="_blank" rel="noopener noreferrer">
+              Open Datasheet →
+            </a>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="w-full" disabled>
+            Open Datasheet (Upload to activate)
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

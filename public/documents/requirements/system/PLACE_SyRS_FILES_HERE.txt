@@ -1,0 +1,10 @@
+System Requirements Specification (SyRS)
+==========================================
+Top-level system requirements for the SNP platform. Allocated to hardware,
+software, and firmware subsystems.
+
+Naming: SNP-SyRS-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-SyRS-001_RevC.pdf            — SNP System Requirements Specification
+  SNP-SyRS-CONOPS-002_RevA.pdf     — Concept of Operations document

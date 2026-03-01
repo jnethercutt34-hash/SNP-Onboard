@@ -1,0 +1,145 @@
+SNP Interface Control Document
+Document Number: SNP-ICD-001
+Revision: A
+Classification: Internal Use Only
+================================================================
+
+1. SCOPE
+--------
+This document defines the electrical, mechanical, and software interfaces for the
+Secure Network Processor (SNP) 3U SpaceVPX computing platform. It covers all
+external connector pinouts, protocol definitions, and timing requirements.
+
+2. APPLICABLE DOCUMENTS
+------------------------
+- VITA 78.00-2019  SpaceVPX Standard
+- MIL-STD-1553B    Avionics Data Bus
+- IEEE 802.3an     10GBASE-T Ethernet
+- FIPS 140-2       Security Requirements for Cryptographic Modules
+
+3. CONNECTOR INTERFACE DEFINITIONS
+-----------------------------------
+
+3.1 VTRFA AirBorn FOCuS Optical Connector (J1)
+   Location:     GPP card front panel, upper-left
+   Channels:     4 (Tx/Rx pairs)
+   Protocol:     10 Gbps NRZ per lane, 40 Gbps aggregate
+   Wavelength:   850 nm VCSEL (short-reach), 1310 nm (long-reach option)
+   Cable type:   AirBorn FOCuS Active Optical Cable (AOC)
+   Max reach:    100 m (850 nm), 10 km (1310 nm)
+   Mating cycles: 500 minimum
+   Notes:        Radiation-hardened sealed optical path. No transceiver cleaning required.
+
+3.2 Nano-D 51-pin Connector (J2)
+   Location:     GPP card front panel, lower-left
+   Pin count:    51 (mixed signal)
+   Pin assignment:
+     Pin 1-4:    MIL-STD-1553B Bus A (differential pair + shield)
+     Pin 5-8:    MIL-STD-1553B Bus B (differential pair + shield)
+     Pin 9-12:   RS-422 UART TxD/RxD (2 independent channels)
+     Pin 13-16:  Discrete I/O (programmable, 3.3V LVTTL)
+     Pin 17-20:  SpaceWire Link 0 (differential, 200 Mbps)
+     Pin 21-24:  SpaceWire Link 1 (differential, 200 Mbps)
+     Pin 25-28:  JTAG (TCK, TMS, TDI, TDO)
+     Pin 29-32:  I2C Bus (SDA, SCL, 2 reserved)
+     Pin 33-36:  SPI Bus (MOSI, MISO, SCLK, CS)
+     Pin 37-40:  CAN Bus (CAN-H, CAN-L, 2 reserved)
+     Pin 41-44:  Analog telemetry inputs (0-5V, 12-bit ADC)
+     Pin 45-48:  Power monitoring (V_in, I_in, V_3v3, V_5v)
+     Pin 49:     Reset (active-low, open-drain)
+     Pin 50:     Interrupt (active-low)
+     Pin 51:     Ground reference
+
+3.3 Micro-USB Connector (J3)
+   Location:     GPP card front panel, center
+   Protocol:     USB 2.0 Full Speed (12 Mbps)
+   Usage:        Ground support equipment (GSE) configuration and debug only
+   Notes:        Not for in-orbit use. Protected by software lockout after launch.
+
+3.4 MDM-15 Connector — PSU (J4)
+   Location:     PSU card front panel
+   Pin assignment:
+     Pin 1:      +28V Primary Input (A)
+     Pin 2:      +28V Primary Input (B)
+     Pin 3:      28V Return (A)
+     Pin 4:      28V Return (B)
+     Pin 5:      Chassis Ground
+     Pin 6:      Enable (active-high, 3.3V)
+     Pin 7:      Fault (active-low, open-drain)
+     Pin 8:      Power Good (active-high)
+     Pin 9:      Temperature Monitor (0-3.3V analog)
+     Pin 10-15:  Reserved
+
+3.5 RJ-45 Copper Connectors (J5, J6) — Copper Mezzanine Only
+   Protocol:     10GBASE-T (IEEE 802.3an)
+   Cable:        Cat-6A shielded minimum
+   Max reach:    100 m at 10 Gbps
+   Notes:        Present only when 10G Copper XMC mezzanine is installed.
+                 Not present in Baseline (optical) configuration.
+
+4. POWER INTERFACE
+------------------
+4.1 Input Voltage:    28V DC nominal (22V – 36V range)
+4.2 Inrush Current:   < 5A peak for 2 ms at cold start
+4.3 Hold-up Time:     10 ms minimum at full load
+4.4 Isolation:        1500V DC primary-to-secondary
+4.5 EMI Filtering:    MIL-STD-461G compliant
+
+5. TIMING INTERFACE
+-------------------
+5.1 1 PPS Signal
+   Source:       Atomic Clock expansion module (when installed)
+   Accuracy:     < 100 ns absolute (GPS-disciplined)
+   Output:       RS-422 differential, 5V logic, 1 µs pulse width
+   Connector:    Nano-D J2 Pin 29 (dedicated 1PPS line)
+
+5.2 10 MHz Reference
+   Source:       Atomic Clock expansion module (when installed)
+   Output:       Differential LVDS, 50 Ω terminated
+   Phase noise:  −130 dBc/Hz at 1 Hz offset
+
+6. ENVIRONMENTAL LIMITS
+------------------------
+   Operating temperature:   −40 °C to +85 °C (component level)
+   Deck temperature:        −21 °C to +50 °C (chassis inlet)
+   Vibration:               20 g RMS, 20-2000 Hz (random)
+   Shock:                   100 g, 11 ms half-sine
+   Radiation tolerance:     100 krad (Si) TID (optical mezzanine)
+                            30 krad (Si) TID (copper mezzanine)
+   Vacuum:                  Qualified for vacuum operation (no convection cooling)
+
+7. FAULT CODES
+--------------
+   ERR_0x01    Power converter undervoltage (<22V on 28V rail)
+   ERR_0x02    Power converter overcurrent (>8A sustained)
+   ERR_0x03    Thermal shutdown (>90°C junction temperature)
+   ERR_0x04    FPGA configuration CRC error
+   ERR_0x05    NVM Flash ECC uncorrectable error
+   ERR_0x06    SDRAM ECC double-bit error
+   ERR_0x07    Optical link loss of signal (VTRFA connector)
+   ERR_0x08    Crypto module FIPS self-test failure
+   ERR_0x09    Loss of sync with Timing & Networking module
+   ERR_0x0A    FPGA partial reconfiguration timeout (>30s)
+   ERR_0x0B    MIL-STD-1553 bus lockout (>100 errors/s)
+   ERR_0x0C    SpaceWire link CRC failure rate exceeded
+   ERR_0x0D    Watchdog timer expiry (GPP unresponsive)
+   ERR_0x0E    Secure boot verification failed
+   ERR_0x0F    Key zeroization event triggered
+
+8. MECHANICAL INTERFACE
+------------------------
+   Form factor:    3U SpaceVPX (VITA 78)
+   Card dimensions: 100 mm × 160 mm (per slot)
+   Chassis slots:  7 total (0-indexed)
+   Slot assignments (standard build):
+     Slot 0:   PSU Red (Power Converter)
+     Slot 1:   Spare (optional expansion)
+     Slot 2:   Spare (optional expansion)
+     Slot 3:   GPP Red (primary processor)
+     Slot 4:   Crypto Module
+     Slot 5:   GPP Black (redundant processor)
+     Slot 6:   PSU Black (Power Converter)
+   Backplane:      VITA 78 7-slot SpaceVPX backplane
+   Connector pitch: 2 mm (backplane P1/P2 connectors)
+
+END OF DOCUMENT

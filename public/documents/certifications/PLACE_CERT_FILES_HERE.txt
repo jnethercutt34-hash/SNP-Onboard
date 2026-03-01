@@ -1,0 +1,11 @@
+Certifications
+===============
+Official certificates, validation letters, and compliance declarations.
+
+Examples:
+  FIPS-140-2-Certificate-CMVP-XXXX.pdf   — FIPS 140-2 Level 3 CMVP certificate
+  MIL-PRF-38534-CoC-001.pdf              — Class H/K device certificate of conformance
+  QML-38535-Approval.pdf                 — QML approval documentation
+  ISO-9001-Certificate.pdf               — Manufacturing quality cert
+  RoHS-Declaration-001.pdf               — RoHS compliance declaration
+  ITAR-Registration.pdf                  — ITAR registration confirmation

@@ -1,0 +1,14 @@
+Hardware Design Documents (HDD)
+================================
+PCB schematics, layout files, BOM, and hardware design descriptions
+for all SNP hardware modules.
+
+Naming: SNP-HDD-<MODULE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-HDD-GPP-001_RevC.pdf         — GPP card hardware design document
+  SNP-HDD-PSU-002_RevB.pdf         — Power converter design document
+  SNP-HDD-MEZ-OPT-003_RevA.pdf     — 10G Optical mezzanine design document
+  SNP-HDD-MEZ-COP-004_RevA.pdf     — 10G Copper mezzanine design document
+  SNP-HDD-CRYPTO-005_RevB.pdf      — Crypto unit design document
+  SNP-BOM-SYS-001_RevC.xlsx        — System-level Bill of Materials

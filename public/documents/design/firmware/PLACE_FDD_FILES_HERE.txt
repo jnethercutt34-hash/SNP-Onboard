@@ -1,0 +1,13 @@
+Firmware Design Documents (FDD)
+================================
+FPGA bitstream design, BSP device tree, bootloader configuration,
+and chassis management firmware.
+
+Naming: SNP-FDD-<MODULE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-FDD-FPGA-001_RevB.pdf        — FPGA design document (FFT/FEC cores)
+  SNP-FDD-FPGA-PR-002_RevA.pdf     — Partial reconfiguration design
+  SNP-FDD-BSP-003_RevB.pdf         — Linux BSP & device tree design
+  SNP-FDD-CMC-004_RevA.pdf         — UT32M0R500 chassis management firmware
+  SNP-FDD-UBOOT-005_RevA.pdf       — U-Boot bootloader configuration

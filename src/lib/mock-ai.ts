@@ -5,11 +5,13 @@ export type ManualSource = "ICD" | "IDD" | "SUM";
 
 export interface AiResponse {
   title: string;
-  /** e.g. "SUM - Sec 4.2", "ICD - Sec 2.1" */
-  source: string;
-  manual: ManualSource;
   summary: string;
-  confidence: ConfidenceLevel;
+  /** e.g. "SUM - Sec 4.2", "ICD - Sec 2.1" — omitted for live AI responses */
+  source?: string;
+  /** Document type badge — omitted for live AI responses */
+  manual?: ManualSource;
+  /** Confidence level — omitted for live AI responses */
+  confidence?: ConfidenceLevel;
   relatedKeys?: string[];
 }
 
@@ -78,7 +80,7 @@ export const AI_RESPONSES: Record<string, AiResponse> = {
     source: "ICD - Sec 3.2",
     manual: "ICD",
     summary:
-      "Single-mode LC fiber connectors, 1310 nm wavelength. Max fiber run: 10 km. SFP+ form factor. Compatible with Customer B GEO ground station uplink. Not present in Customer A pLEO configuration.",
+      "Single-mode LC fiber connectors, 1310 nm wavelength. Max fiber run: 10 km. SFP+ form factor. Used in the Baseline configuration. Not present in ABE, J2, or JL pLEO configurations.",
     confidence: "High",
     relatedKeys: ["net-10g-optical", "net-10g-copper", "SpaceVPX-backplane"],
   },
@@ -87,7 +89,7 @@ export const AI_RESPONSES: Record<string, AiResponse> = {
     source: "ICD - Sec 3.3",
     manual: "ICD",
     summary:
-      "RJ-45 10GBase-T interface. Reduced SWaP-C profile for pLEO missions. 5 W lower power draw versus optical variant. Maximum cable length 30 m. Used exclusively in Customer A pLEO build.",
+      "RJ-45 10GBase-T interface. Reduced SWaP-C profile for pLEO missions. 5 W lower power draw versus optical variant. Maximum cable length 30 m. Used in ABE, J2, and JL pLEO builds.",
     confidence: "High",
     relatedKeys: ["net-10g-copper", "optical-interface"],
   },
@@ -96,7 +98,7 @@ export const AI_RESPONSES: Record<string, AiResponse> = {
     source: "ICD - Sec 4.1",
     manual: "ICD",
     summary:
-      "1 PPS output with <100 ns absolute accuracy. Disciplined oscillator interface over RS-422. Allan deviation < 3×10⁻¹⁰ at 1 s. Required for GEO precision timing. Exposed via expansion slot on Customer B build only.",
+      "1 PPS output with <100 ns absolute accuracy. Disciplined oscillator interface over RS-422. Allan deviation < 3×10⁻¹⁰ at 1 s. Required for precision timing applications. Exposed via expansion slot in configurations that include the Atomic Clock module.",
     confidence: "High",
     relatedKeys: ["timing-atomic-clock", "ERR_0x09"],
   },
@@ -116,18 +118,18 @@ export const AI_RESPONSES: Record<string, AiResponse> = {
     source: "IDD - Sec 1.4",
     manual: "IDD",
     summary:
-      "Customer A pLEO configuration targets a 134 W total power budget, 34 W below Baseline. Key trade: optical → copper networking saves 5 W and 40 g. Reduced radiation hardening requirements in LEO allow omission of additional shielding mass.",
+      "pLEO configurations (ABE, J2, JL) target a 90 W total power budget, 6 W below Baseline. Key trade: optical → copper networking saves 3 W per GPP slot and 15 g per mezzanine. Reduced radiation hardening requirements in LEO allow omission of additional shielding mass.",
     confidence: "Medium",
-    relatedKeys: ["net-10g-copper", "customer-a-pleo"],
+    relatedKeys: ["net-10g-copper", "customer-a-pleo", "customer-b-pleo", "customer-c-pleo"],
   },
-  "geo-timing-rationale": {
-    title: "GEO Precision Timing Design Rationale",
+  "precision-timing-rationale": {
+    title: "Precision Timing Design Rationale",
     source: "IDD - Sec 1.5",
     manual: "IDD",
     summary:
-      "Customer B GEO mission requires nanosecond-class time synchronization for inter-satellite link coordination. The atomic clock expansion adds 18 W and 275 g but eliminates dependency on GPS-disciplined ground references during eclipse periods.",
+      "Missions requiring nanosecond-class time synchronization for inter-satellite link coordination use the Atomic Clock expansion module. It adds 13 W and 275 g but eliminates dependency on GPS-disciplined ground references during eclipse periods.",
     confidence: "Medium",
-    relatedKeys: ["timing-atomic-clock", "csac-timing", "customer-b-geo"],
+    relatedKeys: ["timing-atomic-clock", "csac-timing"],
   },
   "redundancy-architecture": {
     title: "Dual-GPP Redundancy Architecture",
@@ -151,7 +153,7 @@ export function searchAiResponses(query: string): AiResponse[] {
         key.toLowerCase().includes(q) ||
         resp.title.toLowerCase().includes(q) ||
         resp.summary.toLowerCase().includes(q) ||
-        resp.source.toLowerCase().includes(q)
+        (resp.source ?? "").toLowerCase().includes(q)
     )
     .map(([, resp]) => resp);
 }

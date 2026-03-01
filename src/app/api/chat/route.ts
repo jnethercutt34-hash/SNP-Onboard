@@ -25,43 +25,74 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ results, provider, query });
   }
 
-  // ── Gemini (Genkit) ──────────────────────────────────────────────────────
-  if (provider === "gemini") {
-    // TODO: Genkit / Gemini implementation
-    //
-    // import { genkit } from "genkit";
-    // import { googleAI } from "@genkit-ai/googleai";
-    //
-    // const ai = genkit({ plugins: [googleAI()] });
-    // const { text } = await ai.generate({
-    //   model: "gemini-2.0-flash",
-    //   prompt: `Answer this question about SNP hardware: ${query}`,
-    // });
-    // return NextResponse.json({ results: [{ title: "Gemini", summary: text }], provider, query });
+  // ── Internal / Company AI ────────────────────────────────────────────────
+  if (provider === "internal") {
+    const endpoint = process.env.GDMS_AI_ENDPOINT;
+    const token    = process.env.GDMS_AI_AUTH_TOKEN;
+    const model    = process.env.GDMS_AI_MODEL ?? "gpt-4";
 
-    return NextResponse.json(
-      { error: "Gemini provider not yet configured" },
-      { status: 501 }
-    );
+    if (!endpoint || !token) {
+      return NextResponse.json(
+        { error: "GDMS_AI_ENDPOINT and GDMS_AI_AUTH_TOKEN must be set in environment variables." },
+        { status: 503 }
+      );
+    }
+
+    // Load all documents from public/documents/ and build context
+    const { loadAllDocuments, buildContext } = await import("@/lib/document-store");
+    const docs    = await loadAllDocuments();
+    const context = buildContext(docs);
+
+    // Call the company AI via OpenAI-compatible API
+    const { default: OpenAI } = await import("openai");
+    const client = new OpenAI({ baseURL: endpoint, apiKey: token });
+
+    let aiText: string;
+    try {
+      const completion = await client.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a technical documentation assistant for the SNP (Secure Network Processor) " +
+              "product line. Answer questions accurately and concisely based only on the following " +
+              "product documentation. If the answer cannot be found in the documents, say so clearly " +
+              "rather than guessing.\n\n" +
+              context,
+          },
+          {
+            role: "user",
+            content: query,
+          },
+        ],
+      });
+      aiText = completion.choices[0]?.message?.content ?? "No response returned by the AI.";
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return NextResponse.json(
+        { error: `AI request failed: ${message}` },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({
+      results: [
+        {
+          title: query,
+          summary: aiText,
+          source: `${docs.length} document(s) loaded`,
+        },
+      ],
+      provider: "internal",
+      query,
+    });
   }
 
-  // ── Internal / GDMS enterprise ───────────────────────────────────────────
-  if (provider === "internal") {
-    // TODO: GDMS enterprise AI endpoint
-    //
-    // const response = await fetch(process.env.GDMS_AI_ENDPOINT!, {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${process.env.GDMS_AI_AUTH_TOKEN}`,
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ query }),
-    // });
-    // const data = await response.json();
-    // return NextResponse.json({ results: data.answers, provider, query });
-
+  // ── Gemini (Genkit) — not yet configured ────────────────────────────────
+  if (provider === "gemini") {
     return NextResponse.json(
-      { error: "Internal GDMS provider not yet configured" },
+      { error: "Gemini provider not yet configured" },
       { status: 501 }
     );
   }

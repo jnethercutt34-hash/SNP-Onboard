@@ -1,0 +1,11 @@
+JL — pLEO Configuration Documents
+====================================
+JL proliferated LEO variant — copper mezzanine, high-revisit mission profile.
+
+Examples:
+  JL-ICD-001_RevA.pdf              — JL interface control document
+  JL-SOW-001_RevA.pdf              — Statement of Work
+  JL-Proposal-001_RevA.pdf         — Technical and cost proposal
+  JL-CDR-001_RevA.pdf              — Critical Design Review package
+  JL-ATP-001_RevA.pdf              — Acceptance test data package
+  JL-DeliveryNote-001.pdf          — Delivery and shipping documentation

@@ -1,0 +1,11 @@
+J2 — pLEO Configuration Documents
+====================================
+J2 proliferated LEO variant — copper mezzanine, constellation-scale deployment.
+
+Examples:
+  J2-ICD-001_RevA.pdf              — J2 interface control document
+  J2-SOW-001_RevA.pdf              — Statement of Work
+  J2-Proposal-001_RevA.pdf         — Technical and cost proposal
+  J2-CDR-001_RevA.pdf              — Critical Design Review package
+  J2-ATP-001_RevA.pdf              — Acceptance test data package
+  J2-DeliveryNote-001.pdf          — Delivery and shipping documentation

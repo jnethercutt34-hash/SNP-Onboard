@@ -1,0 +1,11 @@
+Software Design Documents (SDD)
+================================
+Software architecture, module design, API specs, and driver documentation.
+
+Naming: SNP-SDD-<MODULE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-SDD-ARCH-001_RevB.pdf        — Software architecture overview
+  SNP-SDD-REDD-002_RevA.pdf        — Redundancy manager design
+  SNP-SDD-NETDRV-003_RevA.pdf      — 10G network driver design
+  SNP-SDD-SELINUX-004_RevA.pdf     — SELinux policy design

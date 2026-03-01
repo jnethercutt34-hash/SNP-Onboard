@@ -1,0 +1,144 @@
+SNP Interface Design Document
+Document Number: SNP-IDD-001
+Revision: A
+Classification: Internal Use Only
+================================================================
+
+1. SCOPE
+--------
+This document describes the internal hardware and software architecture of the
+Secure Network Processor (SNP) platform. It captures design decisions, trade
+studies, and implementation details for all major subsystems.
+
+2. SYSTEM ARCHITECTURE OVERVIEW
+---------------------------------
+The SNP is a dual-redundant 3U SpaceVPX computing platform organized around
+two General Purpose Processor (GPP) cards designated Red (primary) and Black
+(hot standby). Both cards share a common hardware design and are interconnected
+via the SpaceVPX backplane data plane.
+
+Redundancy mode: Hot standby. Black mirrors Red state at 100 ms intervals.
+Switchover time: < 500 ms (hardware-detected failure) or < 2 s (software-voted).
+
+3. GPP CARD DESIGN
+-------------------
+3.1 Processor
+   SoC:         ARM Cortex-A78AE (automotive-grade, ASIL-D)
+   Cores:       4 × Cortex-A78AE + 2 × Cortex-R52 (safety co-processors)
+   Clock:       2.2 GHz (nominal), 1.6 GHz (radiation-derated orbit mode)
+   Cache:       L1 32 KB I+D per core, L2 512 KB per core, L3 4 MB shared
+
+3.2 Memory
+   SDRAM:       16 GB LPDDR4X with ECC (2-bit detection, 1-bit correction)
+   NVM Flash:   2 Gb SLC NAND (firmware, configuration, boot image)
+   Endurance:   100,000 P/E cycles minimum
+   Scrubbing:   Background SDRAM ECC scrub every 60 seconds
+
+3.3 FPGA
+   Device:      1.5M SLC FPGA (radiation-hardened)
+   Fabric:      1,536,000 logic cells, 640 DSP blocks, 72 Mb block RAM
+   Function:    Signal processing pipeline, FEC codec, SerDes MAC termination
+   Reconfiguration: Partial reconfiguration supported (bitstream sectors 0-15)
+   Bitstream:   Stored in NVM Flash, loaded at boot, verified by SHA-256
+
+4. XMC MEZZANINE INTERFACE
+----------------------------
+Each GPP card provides one XMC mezzanine site conforming to VITA 42.3.
+The mezzanine connects to the GPP FPGA via the XMC P15 connector carrying:
+   - 4 × full-duplex 10G SerDes lanes (data plane)
+   - PCIe Gen 2 x4 (control plane)
+   - JTAG (debug)
+   - I2C (mezzanine ID / thermal)
+   - 3.3V, 5V, 12V power rails
+
+4.1 Optical Mezzanine (Baseline)
+   Connects the 4 × 10G SerDes lanes to the AirBorn VTRFA FOCuS optical connector.
+   On-board: Quad PHY (VSC8504), 1.2 TB NVMe SSD (Virtium StorFly), 64 GB eMMC (Virtium).
+   Power: 6 W total (PHY 1.2 W + SSD 4.3 W + eMMC 0.5 W)
+
+4.2 Copper Mezzanine (pLEO variant)
+   Routes 2 × 10G SerDes lanes to dual shielded RJ-45 (10GBASE-T).
+   No on-board storage. Power: 3 W.
+   SWaP-C trade: saves 3 W and 15 g vs optical. Used in ABE, J2, and JL builds.
+
+4.3 QSFP Mezzanine (High-density variant)
+   Routes all 4 × 10G SerDes lanes across 3 × QSFP+ cages.
+   Each QSFP+ cage carries 4 lanes for 40 Gbps per port, 120 Gbps aggregate.
+   Supports 40GBASE-SR4, 40GBASE-LR4, and 4×10G breakout cables.
+   Power: 8 W (excluding transceiver modules).
+
+5. CRYPTO MODULE DESIGN
+------------------------
+   Compliance:     FIPS 140-2 Level 3
+   Algorithms:     AES-256-GCM, AES-256-CBC, RSA-4096, ECC P-384, SHA-3-512
+   Throughput:     AES-256-GCM at 40 Gbps line rate
+   Key storage:    Secure SRAM (battery-backed + active tamper detection)
+   Key zeroization: < 1 µs on tamper event (hardware-triggered)
+   Interface:      SpaceVPX data plane PCIe Gen 3 x4
+
+6. POWER SUBSYSTEM DESIGN
+---------------------------
+6.1 Red PSU
+   Input:        28V primary
+   Outputs:      +3.3V_AUX (standby), +3.3V (logic), +5V (peripherals)
+   Efficiency:   >90% at full load
+   Load:         Supplies GPP Red and Crypto Module
+
+6.2 Black PSU
+   Input:        28V primary
+   Outputs:      +3.3V_AUX, +3.3V, +5V, +12V (backplane high-power rail)
+   Note:         Black PSU is the sole source of the +12V rail on the backplane.
+   Load:         Supplies GPP Black and all backplane 12V loads
+
+7. SWAPPC DESIGN RATIONALE
+---------------------------
+7.1 pLEO Configurations (ABE, J2, JL)
+   Target: 90 W system power budget (6 W below Baseline).
+   Copper mezzanine saves 3 W per GPP slot = 6 W total.
+   Radiation hardening overhead is reduced in LEO (30 krad vs 100 krad TID).
+   Mass savings: 15 g per mezzanine, 30 g total for dual-GPP system.
+
+7.2 Atomic Clock Expansion (J2 only)
+   J2 adds the Timing & Networking Expansion module (slot 1) for precision timing.
+   Adds 13 W and 275 g. J2 total system power: 103 W.
+   Benefit: Nanosecond-class synchronization for inter-satellite link coordination.
+   The CSAC (Cesium chip-scale atomic clock) maintains < 100 ns/day holdover.
+
+8. FPGA SIGNAL PROCESSING ARCHITECTURE
+-----------------------------------------
+The FPGA implements the following pipelined processing chain:
+   Stage 1:  ADC interface and sample buffering (256-sample FIFO)
+   Stage 2:  Digital down-conversion (DDC), 4-channel, 14-bit
+   Stage 3:  FFT core (1024-point, pipelined, 250 MHz clock)
+   Stage 4:  Reed-Solomon FEC decoder (t=16, configurable rate)
+   Stage 5:  LDPC codec (optional, partial reconfiguration region 0-3)
+   Stage 6:  Output DMA to SDRAM via AXI4 burst interface
+
+Partial reconfiguration regions:
+   Region 0-3:  LDPC codec (swappable in-orbit without full re-flash)
+   Region 4-7:  Custom payload processing (customer-defined bitstreams)
+   Region 8-15: Reserved
+
+9. BOOT SEQUENCE
+-----------------
+   Step 1:  PSU power-on, +3.3V_AUX rail active
+   Step 2:  Microcontroller (boot supervisor) performs power rail sequencing
+   Step 3:  FPGA loads baseline configuration bitstream from NVM Flash
+   Step 4:  Secure boot: SHA-256 verification of ARM SoC bootloader
+   Step 5:  U-Boot initializes SDRAM (ECC training, scrub baseline)
+   Step 6:  Linux kernel boots from eMMC (primary) or NVM Flash (fallback)
+   Step 7:  Mission application software starts, declares READY to watchdog
+
+10. REDUNDANCY SWITCHOVER PROCEDURE
+--------------------------------------
+   Trigger (automatic):  Hardware fault detected (ERR_0x03 through ERR_0x0F)
+   Trigger (commanded):  Ground command or software health manager vote
+
+   Switchover steps:
+   1. Black GPP receives switchover command via backplane control plane
+   2. Black transitions from STANDBY to ACTIVE within 500 ms
+   3. Red GPP output drivers disabled (backplane arbitration transferred)
+   4. Ground notified via telemetry within next telemetry frame (1 s)
+   5. Red GPP attempts recovery; if successful, returns to STANDBY mode
+
+END OF DOCUMENT

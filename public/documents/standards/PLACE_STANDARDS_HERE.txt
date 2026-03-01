@@ -1,0 +1,19 @@
+Standards & Reference Documents
+=================================
+Copies of standards referenced by SNP design and test documentation.
+Check licensing before storing copyrighted standards here.
+
+Key standards for this program:
+
+  VITA 78.00 — SpaceVPX System Standard
+  VITA 42    — XMC Mezzanine Standard
+  MIL-STD-810H — Environmental Engineering Considerations
+  MIL-STD-461G — EMC Requirements for Equipment
+  MIL-STD-1275D — Characteristics of 28V DC Power
+  MIL-DTL-83513 — Micro-D Connector Specification
+  FIPS 140-2  — Security Requirements for Cryptographic Modules
+  FIPS 197    — AES Specification
+  IEEE 802.3an — 10GBASE-T Standard
+  IEEE 1588v2 — Precision Time Protocol (PTP)
+  JESD79-4   — LPDDR4 Standard
+  JESD47    — Stress-Test-Driven Qualification (ICs)

@@ -40,25 +40,31 @@ export function AnswerCard({ response }: AnswerCardProps) {
             {response.title}
           </h3>
           <div className="flex items-center gap-2 shrink-0">
-            <Badge
-              variant="outline"
-              className={`text-xs font-semibold ${manualBadgeClass(response.manual)}`}
-            >
-              {response.manual}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`text-xs ${confidenceBadgeClass(response.confidence)}`}
-            >
-              {response.confidence} confidence
-            </Badge>
+            {response.manual && (
+              <Badge
+                variant="outline"
+                className={`text-xs font-semibold ${manualBadgeClass(response.manual)}`}
+              >
+                {response.manual}
+              </Badge>
+            )}
+            {response.confidence && (
+              <Badge
+                variant="outline"
+                className={`text-xs ${confidenceBadgeClass(response.confidence)}`}
+              >
+                {response.confidence} confidence
+              </Badge>
+            )}
           </div>
         </div>
 
         {/* Source reference */}
-        <p className="text-xs text-muted-foreground font-mono">
-          {response.source}
-        </p>
+        {response.source && (
+          <p className="text-xs text-muted-foreground font-mono">
+            {response.source}
+          </p>
+        )}
 
         {/* Summary */}
         <p className="text-sm text-foreground leading-relaxed">

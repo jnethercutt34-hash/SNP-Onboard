@@ -1,0 +1,11 @@
+ABE — pLEO Configuration Documents
+=====================================
+ABE proliferated LEO variant — copper mezzanine, SWaP-C optimised.
+
+Examples:
+  ABE-ICD-001_RevA.pdf             — ABE interface control document
+  ABE-SOW-001_RevA.pdf             — Statement of Work
+  ABE-Proposal-001_RevA.pdf        — Technical and cost proposal
+  ABE-CDR-001_RevA.pdf             — Critical Design Review package
+  ABE-ATP-001_RevA.pdf             — Acceptance test data package
+  ABE-DeliveryNote-001.pdf         — Delivery and shipping documentation

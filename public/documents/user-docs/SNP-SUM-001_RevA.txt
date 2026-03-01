@@ -1,0 +1,171 @@
+SNP System User Manual
+Document Number: SNP-SUM-001
+Revision: A
+Classification: Internal Use Only
+================================================================
+
+1. INTRODUCTION
+----------------
+This manual covers operation, fault diagnosis, and maintenance procedures for
+the Secure Network Processor (SNP) platform. It is intended for ground support
+engineers, integration technicians, and mission operations staff.
+
+2. SYSTEM STATUS INDICATORS
+-----------------------------
+The SNP reports health status via telemetry registers accessible over the
+backplane control plane and the front-panel Micro-USB debug port.
+
+Primary status register: 0x0000 (read-only)
+   Bit 0:    Power Good (Red PSU)
+   Bit 1:    Power Good (Black PSU)
+   Bit 2:    GPP Red READY
+   Bit 3:    GPP Black READY
+   Bit 4:    Crypto Module READY
+   Bit 5:    Atomic Clock LOCKED (if installed)
+   Bit 6:    Active GPP (0=Red, 1=Black)
+   Bit 7:    Fault present (see fault register 0x0010)
+
+3. FAULT CODE REFERENCE
+------------------------
+All fault codes are reported in telemetry register 0x0010 (latching).
+Clear with write 0x01 to register 0x0011 after corrective action.
+
+ERR_0x01 — Power Converter Undervoltage
+   Meaning:  28V primary input dropped below 22V
+   Action:   Check spacecraft power bus. Verify cable connections at MDM-15.
+   Recovery: Fault clears automatically when voltage returns to >23V.
+
+ERR_0x02 — Power Converter Overcurrent
+   Meaning:  Current draw exceeded 8A sustained for >100 ms
+   Action:   Check for short circuit on output rails. Inspect harness.
+   Recovery: Requires manual fault clear after corrective action.
+
+ERR_0x03 — Thermal Shutdown
+   Meaning:  Junction temperature exceeded 90°C on GPP SoC or FPGA
+   Action:   Check thermal interface material. Verify chassis mounting torque.
+             Confirm cooling loop (if conduction-cooled) is operational.
+   Recovery: Automatic resume when temperature drops below 80°C.
+
+ERR_0x04 — FPGA Configuration CRC Error
+   Meaning:  FPGA bitstream failed CRC check during load
+   Action:   Reload bitstream from NVM Flash (command 0x21 to control reg 0x0020).
+             If persists, reprogram NVM Flash with golden image via USB.
+   Recovery: Requires bitstream reload command.
+
+ERR_0x05 — NVM Flash ECC Uncorrectable Error
+   Meaning:  Multi-bit ECC error in NVM Flash — data corruption detected
+   Action:   Reflash NVM from ground uplink. Do not continue normal operations.
+   Recovery: Full NVM reprogram required.
+
+ERR_0x06 — SDRAM ECC Double-Bit Error
+   Meaning:  Uncorrectable SDRAM error (likely SEU heavy-ion strike)
+   Action:   Initiate GPP reset. SDRAM will be re-trained on boot.
+             Log event for radiation environment analysis.
+   Recovery: GPP reset and SDRAM re-initialization.
+
+ERR_0x07 — Optical Link Loss of Signal
+   Meaning:  VTRFA optical connector has lost signal on one or more channels
+   Action:   Check fiber cable connection at VTRFA connector (J1).
+             Inspect for contamination or physical damage.
+             Verify remote end is transmitting.
+   Recovery: Automatic when signal is restored and lock is re-acquired.
+
+ERR_0x08 — Crypto Module FIPS Self-Test Failure
+   Meaning:  Power-on self-test (POST) failed in cryptographic module
+   Action:   Issue crypto module reset (command 0x30 to control reg 0x0030).
+             If failure persists after 3 resets, module requires replacement.
+   Recovery: Module reset. If unrecoverable, system can operate without crypto
+             in a degraded/unencrypted mode (mission permitting).
+
+ERR_0x09 — Loss of Sync with Timing Module
+   Meaning:  GPP has lost synchronization with the Timing & Networking (Atomic Clock) module
+   Action:   Verify 10 Gbps optical or backplane connection to timing module.
+             Check CSAC lock status via telemetry register 0x4A.
+             Confirm timing module power good (bit 5 of status register 0x0000).
+   Recovery: Automatic re-sync attempted every 10 seconds. If not recovered
+             within 60 seconds, system falls back to internal crystal oscillator.
+
+ERR_0x0A — FPGA Partial Reconfiguration Timeout
+   Meaning:  Partial reconfiguration of FPGA fabric regions 0-15 exceeded 30 s
+   Action:   Retry reconfiguration command. If timeout persists, full FPGA
+             reset and reload from NVM may be required.
+   Recovery: Retry command or full FPGA reload.
+
+ERR_0x0B — MIL-STD-1553 Bus Lockout
+   Meaning:  Bus error rate on 1553 bus exceeded 100 errors/second
+   Action:   Inspect Nano-D J2 connector pins 1-8. Check bus termination (82 Ω).
+             Identify and isolate faulty Remote Terminal (RT) device.
+   Recovery: Bus lockout clears when error rate drops below threshold for 5 s.
+
+ERR_0x0C — SpaceWire Link CRC Failure
+   Meaning:  Excessive CRC errors on SpaceWire links (J2 pins 17-24)
+   Action:   Check SpaceWire cable length (<10 m at 200 Mbps).
+             Verify link partner is operating correctly.
+   Recovery: SpaceWire link auto-reconnects after 1 s error-free period.
+
+ERR_0x0D — Watchdog Timer Expiry
+   Meaning:  GPP mission software did not refresh watchdog within 5 s
+   Action:   Automatic GPP reset initiated. Review mission software health.
+             Check for software deadlock or excessive CPU load.
+   Recovery: Automatic reset. Requires software investigation if recurring.
+
+ERR_0x0E — Secure Boot Verification Failed
+   Meaning:  Bootloader image SHA-256 hash mismatch
+   Action:   CRITICAL — Do not operate. Reflash bootloader from ground.
+             Log event and report to security team.
+   Recovery: Bootloader reprogram from authenticated ground uplink.
+
+ERR_0x0F — Key Zeroization Event
+   Meaning:  Active tamper detected — all cryptographic keys have been erased
+   Action:   CRITICAL — Mission data protection may be compromised.
+             System will not resume encrypted operation until new keys are loaded.
+             Inspect physical hardware for evidence of tamper.
+   Recovery: New key injection ceremony required (classified procedure).
+
+4. GROUND SUPPORT EQUIPMENT (GSE) INTERFACE
+---------------------------------------------
+4.1 USB Debug Port (J3 — Micro-USB)
+   Used for pre-launch configuration and post-integration testing only.
+   Connect to GSE laptop running SNP-Config-Tool v2.3 or later.
+   Baud rate: 115200 (console), USB 2.0 (firmware upload)
+   Port is software-disabled after launch unlock command is sent.
+
+4.2 Telemetry Access
+   Primary path:    SpaceVPX backplane UART (115200 baud, 8N1)
+   Secondary path:  1553 Bus (RT address configurable, default RT-5)
+   Telemetry rate:  1 Hz health/status, 10 Hz on fault condition
+
+5. MAINTENANCE PROCEDURES
+--------------------------
+5.1 Mezzanine Replacement
+   Tools required: Torx T6 screwdriver, ESD wrist strap
+   Time estimate:  15 minutes
+   Procedure:
+   1. Power down chassis fully. Verify all rails at 0V with DMM.
+   2. Remove GPP card from slot (release retention latches).
+   3. Remove 4 × M3 screws retaining mezzanine to GPP card.
+   4. Disconnect mezzanine from XMC P15 connector (slide toward front panel).
+   5. Install replacement mezzanine, torque M3 screws to 0.4 N·m.
+   6. Re-seat GPP card. Verify front-panel connector seating.
+   7. Power up and verify ERR_0x07 does not assert (optical) or
+      link-up is confirmed on RJ-45 LEDs (copper).
+
+5.2 NVM Flash Reprogramming
+   Conditions: Required after ERR_0x04, ERR_0x05, or ERR_0x0E
+   Method: Upload new image via USB (SNP-Config-Tool) or ground uplink
+   Duration: 8 minutes (full NVM erase + write)
+   Verification: Post-write CRC check is automatic. Tool reports PASS/FAIL.
+
+6. PERFORMANCE SPECIFICATIONS
+-------------------------------
+   Baseline system power:   96 W (dual optical mezzanine)
+   pLEO system power:       90 W (dual copper mezzanine, ABE/JL builds)
+   J2 system power:         103 W (copper mezzanine + atomic clock)
+   System weight:
+     Baseline:              1,070 g
+     pLEO (ABE/JL):         1,040 g
+     J2 pLEO:               1,315 g
+   Boot time (cold start):  < 90 seconds from power-on to READY
+   Switchover time:         < 500 ms (hardware fault) / < 2 s (software vote)
+
+END OF DOCUMENT

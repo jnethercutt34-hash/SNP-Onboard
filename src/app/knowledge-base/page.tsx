@@ -14,7 +14,7 @@ const EXAMPLE_QUERIES = [
   "ERR_0x09",
   "FPGA signal processing",
   "optical interface",
-  "GEO timing",
+  "atomic clock",
   "redundancy architecture",
   "SWaP-C pLEO",
 ];

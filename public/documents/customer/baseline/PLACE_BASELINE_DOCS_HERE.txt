@@ -1,0 +1,9 @@
+Baseline Customer Documents
+============================
+Documents related to the SNP reference/baseline configuration.
+
+Examples:
+  SNP-BASELINE-ProductSpec-001_RevC.pdf   — Baseline product specification
+  SNP-BASELINE-Proposal-001_RevA.pdf      — Reference proposal
+  SNP-BASELINE-CDR-001_RevA.pdf           — Critical Design Review package
+  SNP-BASELINE-DataPackage-001_RevB.pdf   — Baseline delivery data package

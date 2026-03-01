@@ -1,0 +1,10 @@
+Interface Design Documents (IDD)
+=================================
+Detailed design specifications for each interface defined in the ICDs.
+
+Naming: SNP-IDD-<INTERFACE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-IDD-SERIAL-001_RevA.pdf      — Serial management bus design
+  SNP-IDD-OPTICAL-002_RevA.pdf     — 10G optical interface design
+  SNP-IDD-CRYPTO-003_RevB.pdf      — Crypto unit utility plane interface design

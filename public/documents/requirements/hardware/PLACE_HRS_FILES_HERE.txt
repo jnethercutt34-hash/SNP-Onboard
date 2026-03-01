@@ -1,0 +1,12 @@
+Hardware Requirements Specification (HRS)
+==========================================
+Hardware-level requirements derived from the SyRS. Covers GPP cards,
+mezzanines, PSUs, and expansion modules.
+
+Naming: SNP-HRS-<SUBSYSTEM>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-HRS-GPP-001_RevB.pdf         — GPP card hardware requirements
+  SNP-HRS-PSU-002_RevA.pdf         — Power converter requirements
+  SNP-HRS-MEZ-003_RevA.pdf         — Mezzanine hardware requirements
+  SNP-HRS-CHASSIS-004_RevA.pdf     — Chassis & mechanical requirements

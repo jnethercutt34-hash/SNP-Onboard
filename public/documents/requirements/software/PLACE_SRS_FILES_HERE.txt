@@ -1,0 +1,12 @@
+Software Requirements Specification (SRS)
+==========================================
+Software requirements for BSP, RTOS, drivers, and application software
+running on the GPP ARM processor.
+
+Naming: SNP-SRS-<SUBSYSTEM>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-SRS-BSP-001_RevB.pdf         — Board Support Package requirements
+  SNP-SRS-REDD-002_RevA.pdf        — Redundancy Manager (snp-redd) requirements
+  SNP-SRS-FWUPD-003_RevA.pdf       — Firmware update subsystem requirements
+  SNP-SRS-CRYPTO-004_RevA.pdf      — Crypto middleware requirements

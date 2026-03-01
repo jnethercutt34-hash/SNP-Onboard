@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BUILDS, getBuildById, getBuildDifferences } from "@/lib/mock-hardware";
-import type { ModuleType } from "@/lib/mock-hardware";
+import { BUILDS, getBuildById, getBuildDifferences, flattenComponents } from "@/lib/mock-hardware";
+import type { ComponentType, HardwareComponent } from "@/lib/mock-hardware";
 import { ChassisDiagram } from "@/components/chassis-diagram";
 
 export function generateStaticParams() {
@@ -13,13 +13,14 @@ export function generateStaticParams() {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function moduleTypeBadgeClass(type: ModuleType): string {
-  const map: Record<ModuleType, string> = {
-    processor: "bg-primary/20 text-primary border-primary/30",
-    networking: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    expansion: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-    power: "bg-red-500/20 text-red-400 border-red-500/30",
-    crypto: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+function componentTypeBadgeClass(type: ComponentType): string {
+  const map: Record<ComponentType, string> = {
+    GPP_Base:             "bg-primary/20 text-primary border-primary/30",
+    Mezzanine_XMC:        "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    Networking_Mezzanine: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    Crypto_Module:        "bg-violet-500/20 text-violet-400 border-violet-500/30",
+    Expansion_Module:     "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    Power_Converter:      "bg-red-500/20 text-red-400 border-red-500/30",
   };
   return map[type] ?? "bg-muted text-muted-foreground";
 }
@@ -63,7 +64,7 @@ export default async function BuildDetailPage({
               <Badge className="bg-primary/20 text-primary border-primary/30">Baseline</Badge>
             ) : (
               <Badge variant="secondary">
-                {build.id.includes("pleo") ? "pLEO" : "GEO"}
+                pLEO
               </Badge>
             )}
           </div>
@@ -106,7 +107,7 @@ export default async function BuildDetailPage({
         <h2 className="font-heading text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
           Front Panel — 3U SpaceVPX Chassis
         </h2>
-        <ChassisDiagram modules={build.modules}/>
+        <ChassisDiagram slots={build.slots}/>
         <p className="text-xs text-muted-foreground mt-2">
           Slot layout: GPP Red · GPP Black · Crypto Unit · PSU Red · PSU Black · Expansion · Spare
         </p>
@@ -120,7 +121,7 @@ export default async function BuildDetailPage({
               Total Power
             </p>
             <p className="font-heading text-3xl font-bold text-primary">
-              {build.totalPower} W
+              {build.totalSystemPower} W
             </p>
           </CardContent>
         </Card>
@@ -130,7 +131,7 @@ export default async function BuildDetailPage({
               Total Weight
             </p>
             <p className="font-heading text-3xl font-bold text-accent">
-              {build.totalWeight} g
+              {build.totalSystemWeight} g
             </p>
           </CardContent>
         </Card>
@@ -140,7 +141,7 @@ export default async function BuildDetailPage({
               Modules
             </p>
             <p className="font-heading text-3xl font-bold text-foreground">
-              {build.modules.length}
+              {build.slots.length}
             </p>
           </CardContent>
         </Card>
@@ -148,153 +149,117 @@ export default async function BuildDetailPage({
 
       {/* ── Module grid ──────────────────────────────────────────── */}
       <h2 className="font-heading text-xl font-semibold mb-1 text-foreground">
-        Hardware Modules
+        Hardware Configuration
       </h2>
       <p className="text-xs text-muted-foreground mb-4">
-        Click any module or sub-module chip to view full specs, datasheets, and AI analysis.
+        Each slot shows the base card and any attached XMC mezzanines. Click a card to view full specs.
       </p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {build.modules.map((module) => {
-          const isAdded = diff?.added.some((a) => a.id === module.id) ?? false;
-
-          const swappedOut = isAdded
-            ? diff?.removed.find((r) => r.type === module.type) ?? null
-            : null;
-
-          const powerDelta = swappedOut
-            ? module.powerDraw - swappedOut.powerDraw
-            : isAdded
-            ? module.powerDraw
-            : null;
-
-          const weightDelta = swappedOut
-            ? module.weight - swappedOut.weight
-            : isAdded
-            ? module.weight
-            : null;
+        {build.slots.map((slot) => {
+          const allComponents: HardwareComponent[] = [slot.baseCard, ...slot.attachedMezzanines];
 
           return (
-            <div
-              key={module.id}
-              className={`rounded-md border p-3 ${
-                isAdded
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                  : "border-border bg-secondary/30"
-              }`}
-            >
-              {/* Module name + type badge */}
-              <div className="flex items-start justify-between gap-2">
-                {module.detailId ? (
-                  <Link
-                    href={`/modules/${module.detailId}`}
-                    className="flex items-center gap-1 group/link"
-                  >
-                    <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors leading-snug">
-                      {module.name}
-                    </p>
-                    <span className="text-xs text-muted-foreground group-hover/link:text-primary transition-colors shrink-0">
-                      →
-                    </span>
-                  </Link>
-                ) : (
-                  <p className="text-sm font-medium text-foreground leading-snug">
-                    {module.name}
-                  </p>
-                )}
-                <Badge
-                  variant="outline"
-                  className={`text-xs shrink-0 ${moduleTypeBadgeClass(module.type as ModuleType)}`}
-                >
-                  {module.type}
-                </Badge>
-              </div>
-
-              {/* Added / swapped badge */}
-              {isAdded && (
-                <Badge className="mt-1.5 text-xs bg-primary/20 text-primary border-primary/30">
-                  {swappedOut ? "Swapped vs Baseline" : "Added vs Baseline"}
-                </Badge>
-              )}
-
-              {/* Power & weight with deltas */}
-              <p className="text-xs text-muted-foreground mt-1.5">
-                <span className="font-medium text-foreground">{module.powerDraw} W</span>
-                {powerDelta !== null && (
-                  <span className={`ml-1 ${powerDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
-                    ({delta(powerDelta)} W)
-                  </span>
-                )}
-                <span className="mx-1.5">·</span>
-                <span className="font-medium text-foreground">{module.weight} g</span>
-                {weightDelta !== null && (
-                  <span className={`ml-1 ${weightDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
-                    ({delta(weightDelta)} g)
-                  </span>
-                )}
+            <div key={slot.slotNumber} className="rounded-md border border-border bg-secondary/30 p-3">
+              {/* Slot header */}
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
+                Slot {slot.slotNumber}
               </p>
 
-              {/* Sub-component chips */}
-              {module.subComponents && module.subComponents.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {module.subComponents.map((sc) =>
-                    sc.detailId ? (
-                      <Link
-                        key={sc.name}
-                        href={`/modules/${sc.detailId}`}
-                        className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80 hover:bg-primary/20 hover:border-primary/50 transition-colors"
-                      >
-                        {sc.name}
-                      </Link>
-                    ) : (
-                      <span
-                        key={sc.name}
-                        className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground"
-                      >
-                        {sc.name}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
+              {allComponents.map((comp) => {
+                const isAdded    = diff?.addedComponents.some((a) => a.id === comp.id) ?? false;
+                const isRemoved  = diff?.removedComponents.some((r) => r.id === comp.id) ?? false;
+                const isMezzanine = comp.type === "Mezzanine_XMC";
+
+                return (
+                  <div
+                    key={comp.id}
+                    className={`rounded border p-2 mb-1.5 last:mb-0 ${
+                      isAdded
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                        : isMezzanine
+                        ? "border-border/50 bg-secondary/50 ml-3"
+                        : "border-border bg-secondary/20"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      {comp.detailId ? (
+                        <Link href={`/modules/${comp.detailId}`} className="flex items-center gap-1 group/link">
+                          <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors leading-snug">
+                            {comp.name}
+                          </p>
+                          <span className="text-xs text-muted-foreground group-hover/link:text-primary transition-colors shrink-0">→</span>
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium text-foreground leading-snug">{comp.name}</p>
+                      )}
+                      <Badge variant="outline" className={`text-xs shrink-0 ${componentTypeBadgeClass(comp.type)}`}>
+                        {comp.type.replace("_", " ")}
+                      </Badge>
+                    </div>
+
+                    {isAdded && (
+                      <Badge className="mt-1 text-xs bg-primary/20 text-primary border-primary/30">
+                        {isRemoved ? "Swapped vs Baseline" : "Added vs Baseline"}
+                      </Badge>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {comp.powerDrawWatts} W · {comp.weightGrams} g
+                    </p>
+
+                    {comp.subComponents && comp.subComponents.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {comp.subComponents.map((sc) =>
+                          sc.detailId ? (
+                            <Link key={sc.name} href={`/modules/${sc.detailId}`}
+                              className="inline-block rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs text-primary/80 hover:bg-primary/20 hover:border-primary/50 transition-colors">
+                              {sc.name}
+                            </Link>
+                          ) : (
+                            <span key={sc.name}
+                              className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground">
+                              {sc.name}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
       </div>
 
       {/* ── Not included vs Baseline ──────────────────────────────── */}
-      {diff && diff.removed.length > 0 && (
+      {diff && diff.removedComponents.length > 0 && (
         <div className="mt-10">
           <h2 className="font-heading text-xl font-semibold mb-1 text-muted-foreground">
             Not Included vs Baseline
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            These baseline modules are replaced or omitted in this configuration.
+            These baseline components are replaced or omitted in this configuration.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {diff.removed.map((module) => (
+            {diff.removedComponents.map((comp, i) => (
               <div
-                key={module.id}
+                key={`${comp.id}-${i}`}
                 className="rounded-md border border-dashed border-muted/50 bg-secondary/10 p-3 opacity-50"
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-muted-foreground leading-snug line-through">
-                    {module.name}
+                    {comp.name}
                   </p>
-                  <Badge
-                    variant="outline"
-                    className="text-xs shrink-0 text-muted-foreground border-muted"
-                  >
-                    {module.type}
+                  <Badge variant="outline" className="text-xs shrink-0 text-muted-foreground border-muted">
+                    {comp.type.replace("_", " ")}
                   </Badge>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="mt-1.5 text-xs text-muted-foreground border-muted"
-                >
+                <Badge variant="outline" className="mt-1.5 text-xs text-muted-foreground border-muted">
                   Replaced in this build
                 </Badge>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  {module.powerDraw} W · {module.weight} g
+                  {comp.powerDrawWatts} W · {comp.weightGrams} g
                 </p>
               </div>
             ))}

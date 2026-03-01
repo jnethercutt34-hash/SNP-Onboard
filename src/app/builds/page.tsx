@@ -1,23 +1,21 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { BUILDS, getBuildDifferences } from "@/lib/mock-hardware";
+import { BUILDS, getBuildDifferences, flattenComponents } from "@/lib/mock-hardware";
 
 const SHORT_NAME: Record<string, string> = {
-  "gpp-universal-a": "GPP Red",
-  "gpp-universal-b": "GPP Black",
-  "crypto-unit": "Crypto Unit",
-  "psu-red": "PSU Red",
-  "psu-black": "PSU Black",
-  "net-10g-copper": "10G Copper",
+  "gpp-universal-a":     "GPP Red",
+  "gpp-universal-b":     "GPP Black",
+  "crypto-unit":         "Crypto Unit",
+  "psu-red":             "PSU Red",
+  "psu-black":           "PSU Black",
+  "mez-optical-10g":     "Optical 10G",
+  "mez-copper-10g":      "Copper 10G",
+  "mez-qsfp-3x":        "3× QSFP",
   "timing-atomic-clock": "Atomic Clock",
 };
 
 export default function BuildsPage() {
-  const maxPower = Math.max(...BUILDS.map((b) => b.totalPower));
-  const maxWeight = Math.max(...BUILDS.map((b) => b.totalWeight));
-
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
 
@@ -51,7 +49,7 @@ export default function BuildsPage() {
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="shrink-0">
-                      {build.id.includes("pleo") ? "pLEO" : "GEO"}
+                      pLEO
                     </Badge>
                   )}
                 </div>
@@ -62,69 +60,43 @@ export default function BuildsPage() {
 
               <CardContent className="space-y-5">
 
-                {/* Power */}
-                <div>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <span className="text-xs text-muted-foreground uppercase tracking-widest">
-                      Power
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">
-                      {build.totalPower} W
-                      {diff && (
-                        <span
-                          className={`ml-1.5 text-xs font-normal ${
-                            diff.powerDelta > 0 ? "text-destructive" : "text-emerald-400"
-                          }`}
-                        >
-                          ({diff.powerDelta > 0 ? "+" : ""}
-                          {diff.powerDelta} W)
-                        </span>
-                      )}
-                    </span>
+                {/* Power + Weight */}
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="rounded-md bg-secondary/30 px-3 py-2.5">
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Power</p>
+                    <p className="font-heading text-xl font-bold text-primary">
+                      {build.totalSystemPower} W
+                    </p>
+                    {diff && (
+                      <p className={`text-xs mt-0.5 ${diff.powerDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
+                        {diff.powerDelta > 0 ? "+" : ""}{diff.powerDelta} W
+                      </p>
+                    )}
                   </div>
-                  <Progress
-                    value={(build.totalPower / maxPower) * 100}
-                    className="h-2"
-                  />
+                  <div className="rounded-md bg-secondary/30 px-3 py-2.5">
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Weight</p>
+                    <p className="font-heading text-xl font-bold text-accent">
+                      {build.totalSystemWeight} g
+                    </p>
+                    {diff && (
+                      <p className={`text-xs mt-0.5 ${diff.weightDelta > 0 ? "text-destructive" : "text-emerald-400"}`}>
+                        {diff.weightDelta > 0 ? "+" : ""}{diff.weightDelta} g
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Weight */}
-                <div>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <span className="text-xs text-muted-foreground uppercase tracking-widest">
-                      Weight
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">
-                      {build.totalWeight} g
-                      {diff && (
-                        <span
-                          className={`ml-1.5 text-xs font-normal ${
-                            diff.weightDelta > 0 ? "text-destructive" : "text-emerald-400"
-                          }`}
-                        >
-                          ({diff.weightDelta > 0 ? "+" : ""}
-                          {diff.weightDelta} g)
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <Progress
-                    value={(build.totalWeight / maxWeight) * 100}
-                    className="h-2"
-                  />
-                </div>
-
-                {/* Module badges */}
+                {/* Component badges */}
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                    Modules
+                    Components
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {build.modules.map((mod) => {
-                      const isAdded = diff?.added.some((a) => a.id === mod.id) ?? false;
+                    {flattenComponents(build).map((comp, i) => {
+                      const isAdded = diff?.addedComponents.some((a) => a.id === comp.id) ?? false;
                       return (
                         <Badge
-                          key={mod.id}
+                          key={`${comp.id}-${i}`}
                           variant="outline"
                           className={`text-xs ${
                             isAdded
@@ -132,18 +104,18 @@ export default function BuildsPage() {
                               : "text-muted-foreground"
                           }`}
                         >
-                          {SHORT_NAME[mod.id] ?? mod.name}
+                          {SHORT_NAME[comp.id] ?? comp.name}
                         </Badge>
                       );
                     })}
-                    {/* Removed modules — struck out */}
-                    {diff?.removed.map((mod) => (
+                    {/* Removed components — struck out */}
+                    {diff?.removedComponents.map((comp, i) => (
                       <Badge
-                        key={mod.id}
+                        key={`${comp.id}-removed-${i}`}
                         variant="outline"
                         className="text-xs line-through text-muted-foreground/50 border-muted/50"
                       >
-                        {SHORT_NAME[mod.id] ?? mod.name}
+                        {SHORT_NAME[comp.id] ?? comp.name}
                       </Badge>
                     ))}
                   </div>
@@ -153,10 +125,18 @@ export default function BuildsPage() {
                 <div className="flex gap-4 border-t border-border pt-4 text-center">
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                      Modules
+                      Slots Used
                     </p>
                     <p className="font-heading text-xl font-bold text-foreground">
-                      {build.modules.length}
+                      {build.slots.length} / 7
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                      Spares
+                    </p>
+                    <p className={`font-heading text-xl font-bold ${7 - build.slots.length > 0 ? "text-emerald-400" : "text-muted-foreground"}`}>
+                      {7 - build.slots.length}
                     </p>
                   </div>
                   {diff && (
@@ -165,7 +145,7 @@ export default function BuildsPage() {
                         Changed
                       </p>
                       <p className="font-heading text-xl font-bold text-primary">
-                        {diff.added.length + diff.removed.length}
+                        {diff.addedComponents.length + diff.removedComponents.length}
                       </p>
                     </div>
                   )}

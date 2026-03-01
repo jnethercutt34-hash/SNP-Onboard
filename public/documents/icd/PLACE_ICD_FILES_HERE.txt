@@ -1,0 +1,11 @@
+Interface Control Documents (ICD)
+==================================
+Defines the interfaces between the SNP and external systems.
+
+Naming: SNP-ICD-<INTERFACE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-ICD-BACKPLANE-001_RevB.pdf   — SpaceVPX backplane interface
+  SNP-ICD-GROUNDSEG-002_RevA.pdf   — Ground segment uplink/downlink interface
+  SNP-ICD-PAYLOAD-003_RevA.pdf     — Payload data interface
+  SNP-ICD-POWER-004_RevB.pdf       — 28V primary power interface

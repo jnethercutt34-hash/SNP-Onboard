@@ -1,0 +1,14 @@
+User Documentation
+===================
+Operator manuals, installation guides, and maintenance documentation
+intended for end users and integration teams.
+
+Naming: SNP-UM-<TYPE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-UM-OPERATOR-001_RevB.pdf     — Operator's Manual
+  SNP-UM-INSTALL-002_RevB.pdf      — Installation & Integration Guide
+  SNP-UM-MAINT-003_RevA.pdf        — Maintenance Manual
+  SNP-UM-QUICKSTART-004_RevA.pdf   — Quick-Start Guide
+  SNP-UM-SAFETY-005_RevA.pdf       — Safety & Handling Instructions
+  SNP-UM-FWUPD-006_RevA.pdf        — Firmware Update User Guide

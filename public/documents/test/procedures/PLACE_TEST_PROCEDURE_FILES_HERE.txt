@@ -1,0 +1,12 @@
+Test Procedures
+================
+Step-by-step procedures executed during testing. Traceable to test plans.
+
+Naming: SNP-PROC-<TYPE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-PROC-ATP-001_RevB.pdf        — Acceptance Test Procedure
+  SNP-PROC-VIBRATION-002_RevA.pdf  — Vibration test procedure
+  SNP-PROC-THERMAL-003_RevA.pdf    — Thermal vacuum test procedure
+  SNP-PROC-FWUPD-004_RevA.pdf      — Firmware update procedure
+  SNP-PROC-CRYPTO-005_RevA.pdf     — Crypto unit key-loading procedure

@@ -1,0 +1,12 @@
+Test Reports
+=============
+Completed test results, qualification reports, and acceptance data packages.
+
+Naming: SNP-TR-<TYPE>-<NNN>_Rev<X>.pdf
+
+Examples:
+  SNP-TR-ATP-001_RevA.pdf          — Acceptance Test Report
+  SNP-TR-ENV-002_RevA.pdf          — Environmental Qualification Report (MIL-STD-810H)
+  SNP-TR-RAD-003_RevA.pdf          — Radiation Test Report (TID & SEE)
+  SNP-TR-EMC-004_RevA.pdf          — EMC/EMI Test Report
+  SNP-TR-LIFE-005_RevA.pdf         — Life/reliability test report
