@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-01_
+_Last updated: 2026-03-05_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -301,11 +301,21 @@ SVG infographic rendered at the top of `/builds`. Shows the full SNP product evo
   - Junction dot at the T-intersection
   - Customers in a row: ABE · J2 · JL
 
-**Node styling:**
-- FMS: amber glow, "IRAD" pill badge
-- Baseline: Mission Blue glow, "PRODUCTION" pill badge, taller (hub node)
+**Node dimensions (viewBox="0 0 615 278"):**
+- FMS: `{ x:10, y:40, w:135, h:100, cx:77, cy:75 }`
+- Baseline: `{ x:215, y:18, w:160, h:145, cx:295, cy:75 }`
+- Next Gen: `{ x:445, y:40, w:145, h:70, cx:517, cy:75 }`
+- Customer nodes: `w:120, h:70`, `forkY:175`, `custY:195`
+- ABE: `x:95, cx:155` · J2: `x:235, cx:295` · JL: `x:375, cx:435`
+
+**Node styling & content:**
+- FMS: amber glow, "IRAD" pill badge — specs: `16 GB SDRAM · FPGA 1.5M SLC`, `Dual 10G Optical · 2 Gb NVM`
+- Baseline: Mission Blue glow, "PRODUCTION" pill badge — specs: `32 GB SDRAM · 2× 1.2 TB NVMe`, `Dual 10G Optical · HW Crypto`, `2× VTRFA · 2× Nano-D · 2× USB`, `7-slot SpaceVPX · Dual GPP · Dual PSU`, `96 W`
 - Next Gen: ghost/dashed border, very muted — roadmap placeholder
-- Customers: dark card style, shows power draw
+- Customers: dark card style — 4 lines: name, mission/network type, RAM/config, power draw
+  - ABE: `32 GB SDRAM · 2× 1.2 TB NVMe` · 90 W
+  - J2: `32 GB SDRAM · Precision Sync` · 103 W
+  - JL: `32 GB SDRAM · 2× 1.2 TB NVMe` · 90 W
 
 **Colors used** (from globals.css):
 - IRAD amber: `hsl(38 92% 50%)` / `hsl(38 92% 60%)`
@@ -377,7 +387,8 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 ## 13. Git Commit History
 
 ```
-(this session)   Add FMS IRAD build and product lineage diagram
+(this session)   Add high-level specs to product lineage diagram nodes
+6357cf0          Add FMS IRAD build and product lineage diagram
 8987e2f          Add SESSION-CONTEXT.md for future agent onboarding
 53625d5          Add AI knowledge base integration, GEO removal, new mezzanine, and document store
 51e40ee          Add component detail pages, chassis diagram, and clickable navigation
