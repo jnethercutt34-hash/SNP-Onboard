@@ -57,26 +57,29 @@ export default function OverviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-base">Dual-GPP Redundancy</CardTitle>
+              <CardTitle className="font-heading text-base">Dual-GPP — Two-CCA Architecture</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Two ARM Cortex-A78AE GPP cards in hot-standby. Switchover latency &lt;200 ms
-                via SpaceVPX control plane. Black can be demoted to co-processing mode to
-                double compute throughput on demand.
+                Each GPP is a two-CCA assembly: a fixed <span className="text-foreground font-medium">Universal carrier board</span> and
+                a mission-configurable <span className="text-foreground font-medium">Mezzanine daughter card</span>. Two GPP assemblies
+                run in hot-standby with &lt;200 ms switchover via the SpaceVPX control plane.
+                Black can be demoted to co-processing mode to double compute throughput on demand.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-base">FPGA Signal Processing</CardTitle>
+              <CardTitle className="font-heading text-base">GPP Universal Board</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                1.5M SLC FPGA with pipelined FFT core and Reed-Solomon FEC codec. Supports
-                partial reconfiguration for in-orbit algorithm updates without a full NVM
-                re-flash cycle.
+                A complex digital CCA built around the <span className="text-foreground font-medium">AMD Versal VM1502</span> — integrating
+                a 1.5M SLC FPGA fabric, dual ARM Cortex-A78AE application processors, and an AI Engine array.
+                Paired with 16 GB DDR4, 2 Gb MRAM, and a dedicated board-management microcontroller.
+                The Universal board is a fixed design — it does not change unit to unit. All mission
+                differentiation is handled by the Mezzanine daughter card.
               </p>
             </CardContent>
           </Card>
@@ -87,9 +90,10 @@ export default function OverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                16 GB radiation-tolerant LPDDR4X SDRAM with hardware ECC correction. Paired
-                with 2 Gb NVM flash for firmware and configuration persistence across power
-                cycles.
+                16 GB DDR4 SDRAM with hardware ECC correction for radiation-tolerant operation.
+                2 Gb <span className="text-foreground font-medium">MRAM</span> provides non-volatile,
+                radiation-immune storage for firmware, keys, and configuration — retaining state
+                through power cycles and single-event upsets without a re-flash cycle.
               </p>
             </CardContent>
           </Card>
@@ -110,13 +114,16 @@ export default function OverviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-base">Mission Expandability</CardTitle>
+              <CardTitle className="font-heading text-base">Mezzanine &amp; Spare Slot Expandability</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Expansion slot supports mission-specific modules. Time Managment System deployments add a
-                chip-scale atomic clock (CSAC) for nanosecond-class time synchronization
-                independent of GPS ground references.
+                The Mezzanine daughter card connects to the Universal board via an{" "}
+                <span className="text-foreground font-medium">FMC connector</span>, making it the sole
+                hardware variable between builds. Any mezzanine option (Optical, Copper, QSFP, CSAC Timing)
+                can be installed on either baseline GPP. Additional GPP assemblies can also occupy the
+                two spare VPX slots — each with its own mezzanine — to unlock parallel processing
+                pipelines, additional network interfaces, or independent timing domains per side.
               </p>
             </CardContent>
           </Card>
@@ -467,6 +474,57 @@ export default function OverviewPage() {
               </CardContent>
             </Card>
           </Link>
+
+          {/* ── CSAC Precision Timing Module ── */}
+          <Card className="h-full border-amber-500/30 bg-amber-500/5">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="font-heading text-base leading-snug text-amber-300">
+                  CSAC Precision Timing Module
+                </CardTitle>
+                <Badge className="shrink-0 bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                  Expansion
+                </Badge>
+              </div>
+              <CardDescription className="text-xs leading-relaxed">
+                A dedicated VPX expansion module housing a Chip-Scale Atomic Clock (CSAC).
+                Provides nanosecond-class PTP precision, 1PPS, and 10 MHz reference outputs
+                to the network interfaces on the connected GPP side. Requires its own VPX slot —
+                this is not a drop-in mezzanine swap. Optional signal filtering isolates 1PPS
+                and 10 MHz outputs to either the Red or Black security domain without cross-contamination.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: "PTP Accuracy", value: "< 50 ns"    },
+                  { label: "1PPS Jitter",  value: "< 1 ns"     },
+                  { label: "10 MHz Ref",   value: "±5×10⁻¹¹"  },
+                ].map(({ label, value }) => (
+                  <div key={label} className="rounded-md bg-amber-500/10 px-2 py-1.5">
+                    <p className="text-xs text-amber-400/70 uppercase tracking-widest leading-none mb-1">{label}</p>
+                    <p className="text-sm font-semibold text-amber-200 font-mono">{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {["CSAC", "1 PPS Out", "10 MHz Out", "IEEE 1588v2 PTP", "Red Filter", "Black Filter", "Occupies VPX Slot"].map((feat) => (
+                  <span key={feat}
+                    className="inline-block rounded border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-400/80">
+                    {feat}
+                  </span>
+                ))}
+              </div>
+              <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                <p className="text-xs text-amber-400 font-semibold uppercase tracking-widest mb-0.5">Red / Black Domain Filtering</p>
+                <p className="text-xs text-muted-foreground">
+                  Signal filtering selectable per output — route 1PPS and 10 MHz to Red or
+                  Black domain independently. Pairs with the GPP on the same network side
+                  to deliver high-precision PTP timestamps to that domain's interfaces.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
         </div>
       </section>
