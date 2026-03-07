@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-06_
+_Last updated: 2026-03-06 (Session 3)_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -29,6 +29,7 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 | `/` | `src/app/page.tsx` | Overview: hero, architecture cards, chassis diagram, baseline config, mezzanine options, expansion modules |
 | `/builds` | `src/app/builds/page.tsx` | Product lineage diagram + customer comparison grid — all builds side by side with power/weight/diff |
 | `/builds/[customerId]` | `src/app/builds/[customerId]/page.tsx` | Single build detail: chassis SVG, slot manifest, added/removed components vs baseline |
+| `/builds/[customerId]/modules/[componentId]` | `src/app/builds/[customerId]/modules/[componentId]/page.tsx` | **Customer-context module page** — shows which interfaces are active/partial/unused for that customer, alongside full base specs |
 | `/modules` | `src/app/modules/page.tsx` | Full component catalog, filterable by category |
 | `/modules/[componentId]` | `src/app/modules/[componentId]/page.tsx` | Component detail: specs table, datasheets, sub-modules, related components |
 | `/knowledge-base` | `src/app/knowledge-base/page.tsx` | AI Q&A — client component, calls POST /api/chat |
@@ -60,6 +61,7 @@ src/
   lib/
     mock-hardware.ts                  Hardware types, component catalog, builds, utilities
     mock-components.ts                Component detail page data (specs, datasheets, related)
+    customer-module-overrides.ts      Per-customer interface usage annotations (active/partial/unused)
     mock-ai.ts                        Mock AI responses + AiResponse interface
     document-store.ts                 Server-side document ingestion for knowledge base
     utils.ts                          cn() utility
@@ -131,7 +133,8 @@ interface SystemBuild {
 | `gpp-universal-b` | Universal GPP Card (Black) | GPP_Base | 31 | 280 | gpp-universal |
 | `mez-optical-10g` | 10G Optical XMC Mezzanine | Networking_Mezzanine | 6 | 40 | optical-10g |
 | `mez-copper-10g` | 10G Copper XMC Mezzanine | Networking_Mezzanine | 3 | 25 | net-10g-copper |
-| `mez-qsfp-3x` | 3× QSFP XMC Mezzanine | Networking_Mezzanine | 8 | 55 | mez-qsfp-3x |
+| `mez-qsfp-3x` | 3× QSFP XMC Mezzanine (Active) | Networking_Mezzanine | 8 | 55 | mez-qsfp-3x |
+| *(no HW instance yet)* | 10G QSFP Passive XMC Mezzanine | Networking_Mezzanine | 5 | 48 | mez-qsfp-passive |
 | `crypto-unit` | Cryptographic Processing Unit | Crypto_Module | 10 | 130 | crypto-unit |
 | `timing-atomic-clock` | Timing & Networking Expansion | Expansion_Module | 13 | 275 | timing-atomic-clock |
 | `psu-red` | Power Converter (Red) | Power_Converter | 5 | 140 | psu-red |
@@ -343,7 +346,14 @@ SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SV
 - J2: pLEO · Atomic Clock, Red/Black Copper 10G + VTRFA · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 103 W
 - JL: pLEO Mission, Red/Black Copper 10G + VTRFA · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
 
-**"CUSTOMER VARIANTS" label:** positioned below the three customer boxes at `y={custY + custH + 12}`
+**J2 node** has its own height constant `j2H = 155` (vs `custH = 110` for ABE/JL) due to extra interface callouts. The `j2.cy` uses `j2H`. The CUSTOMER VARIANTS label uses `j2H`. viewBox height is `455`.
+
+**J2 Red interfaces:** VTRFA · Nano-D · USB · 1× RS-422 In · 1× RS-422 Out · 1× 1PPS (LVDS) In · 2 Gb NVM · FPGA 1.5M SLC
+**J2 Black interfaces:** VTRFA · Nano-D · USB · 4× 1PPS · 4× 10 MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c reqd, Quad PHY per Baseline) · 2 Gb NVM · FPGA 1.5M SLC
+
+**NVM/SLC callout convention (Session 3):** Each customer variant node now shows `2 Gb NVM · FPGA 1.5M SLC` as a sub-line under **both** the Red section and the Black section separately (not a shared R+B line).
+
+**"CUSTOMER VARIANTS" label:** positioned at `y={custY + j2H + 12}` (uses j2H so it clears the tallest box)
 
 ---
 
@@ -371,10 +381,13 @@ const isIrad     = build.id === "fms-irad";
 5. **High-Speed Networking** — 1G Quad PHY, 10 Gbps fiber-optic / copper swap
 6. **Mezzanine & Spare Slot Expandability** — Mezzanine connects via **FMC connector** to Universal board. Any mezzanine can go on baseline GPPs or spare slot GPPs.
 
-### Mezzanine Options (3 cards, lg:grid-cols-3)
+### Mezzanine Options (4 cards, lg:grid-cols-3)
 - 10G Optical XMC (Baseline) → `/modules/optical-10g`
-- 10G Copper XMC (pLEO) → `/modules/net-10g-copper`
-- 3× QSFP XMC (High-Density) → `/modules/mez-qsfp-3x`
+- 10G Copper XMC (pLEO) → `/modules/net-10g-copper` — **4× 10GBase-T, 40 Gbps aggregate**
+- 3× QSFP XMC Active (High-Density) → `/modules/mez-qsfp-3x`
+- 10G QSFP Passive XMC (DAC/AOC) → `/modules/mez-qsfp-passive` — 3× QSFP+ passive, 5 W, 48 g, includes SSD + eMMC + Nano-D Quad PHY
+
+All 4 mezzanine cards have: **4× 10/100/1000Base-T via 51-pin Nano-D connector (Microchip VSC8504 Quad PHY)**
 
 ### Expansion Modules (3 cards, sm:grid-cols-2 — note: now 3 cards in a 2-col grid)
 - Cryptographic Processing Unit → `/modules/crypto-unit`
@@ -391,6 +404,13 @@ const isIrad     = build.id === "fms-irad";
 3. **ComponentType Record maps are exhaustive** — `Record<ComponentType, string>` maps appear in `builds/[customerId]/page.tsx` (`componentTypeBadgeClass`). Must include ALL ComponentType values or TypeScript errors.
 4. **pdf-parse in production deps** — must stay in `dependencies` (not `devDependencies`) and listed in `next.config.ts` `serverExternalPackages`.
 5. **AiResponse optional fields** — `manual`, `source`, `confidence` are optional. Do not make them required.
+6. **Customer module links** — In `builds/[customerId]/page.tsx`, mezzanine components (`Mezzanine_XMC`, `Networking_Mezzanine`) link to `/builds/${customerId}/modules/${comp.detailId}`. All other types link to `/modules/${comp.detailId}`. This is enforced by `MEZZANINE_TYPES` Set constant at the top of the page.
+
+### Customer Module Override System (Session 3)
+- **`src/lib/customer-module-overrides.ts`** — Map keyed by `"${customerId}::${componentDetailId}"`. Each entry is a `CustomerModuleOverride` with: `summary`, optional `perSide` (red/black), optional flat `interfaces`, optional `additionalSpecs`, optional `notes`.
+- **`InterfaceUsage`** — `{ name, status: "active"|"partial"|"unused", detail }`. Rendered with green/amber/muted badges.
+- **`src/app/builds/[customerId]/modules/[componentId]/page.tsx`** — Customer-context module page. Shows customer interface config at top (per-side cards or flat list), then full base specs below. Footer links back to build and to generic module page.
+- `generateStaticParams` flattens all build slots to generate all valid `customerId::componentId` combos.
 
 ### Build ID Convention
 All non-baseline, non-IRAD builds use `customer-[letter]-pleo` IDs. The badge shows `"pLEO"` for these. FMS uses `fms-irad` and gets an amber IRAD badge.

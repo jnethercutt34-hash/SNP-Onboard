@@ -15,9 +15,10 @@ export function ProductLineage() {
   const custY  = 265;   // y of customer node tops
   const custW  = 130;
   const custH  = 110;
+  const j2H    = 155;   // J2 is taller due to additional interface callouts
 
   const abe = { x: 126, cx: 191, cy: custY + custH / 2 };
-  const j2  = { x: 305, cx: 370, cy: custY + custH / 2 };
+  const j2  = { x: 305, cx: 370, cy: custY + j2H  / 2 };
   const jl  = { x: 484, cx: 549, cy: custY + custH / 2 };
 
   // Baseline bottom-center (branch origin)
@@ -30,7 +31,7 @@ export function ProductLineage() {
       </p>
       <div className="overflow-x-auto pb-2">
       <svg
-        viewBox="0 0 720 408"
+        viewBox="0 0 720 455"
         style={{ width: '100%', minWidth: '720px', display: 'block' }}
         xmlns="http://www.w3.org/2000/svg"
         role="img"
@@ -121,7 +122,7 @@ export function ProductLineage() {
         ))}
 
         {/* "Customer Variants" label — below the boxes */}
-        <text x={bl.cx} y={custY + custH + 12}
+        <text x={bl.cx} y={custY + j2H + 12}
           textAnchor="middle" fontSize="7.5"
           fill="hsl(215 20% 42%)" letterSpacing="1.5" fontFamily="monospace">
           CUSTOMER VARIANTS
@@ -206,7 +207,7 @@ export function ProductLineage() {
         </text>
         <text x={bl.cx} y={bl.y + 95} textAnchor="middle" fontSize="6.5"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
-          VTRFA · Nano-D (4× 1000Base-T) · USB
+          VTRAF · Nano-D (4× 1000Base-T) · USB
         </text>
         <text x={bl.cx} y={bl.y + 106} textAnchor="middle" fontSize="7.5"
           fill="hsl(215 10% 48%)" fontFamily="sans-serif">
@@ -214,7 +215,7 @@ export function ProductLineage() {
         </text>
         <text x={bl.cx} y={bl.y + 116} textAnchor="middle" fontSize="6.5"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
-          VTRFA · Nano-D (4× 1000Base-T) · USB
+          VTRAF · Nano-D (4× 1000Base-T) · USB
         </text>
         <text x={bl.cx} y={bl.y + 128} textAnchor="middle" fontSize="7.5"
           fill="hsl(217 55% 62%)" fontFamily="sans-serif">
@@ -255,25 +256,29 @@ export function ProductLineage() {
           fill="hsl(215 20% 52%)" fontFamily="sans-serif">
           pLEO · 2× ACAM (Cold Spare)
         </text>
-        <text x={abe.cx} y={custY + 36} textAnchor="middle" fontSize="7"
+        <text x={abe.cx} y={custY + 34} textAnchor="middle" fontSize="6.5"
           fill="hsl(2 60% 55%)" fontFamily="sans-serif">
           Red: 16 GB DDR4 · Copper 10G
         </text>
-        <text x={abe.cx} y={custY + 45} textAnchor="middle" fontSize="6.5"
+        <text x={abe.cx} y={custY + 42} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
-          VTRFA · Nano-D · USB
+          VTRFA · 4× 1000Base-T · USB
         </text>
-        <text x={abe.cx} y={custY + 56} textAnchor="middle" fontSize="7"
+        <text x={abe.cx} y={custY + 50} textAnchor="middle" fontSize="6"
+          fill="hsl(2 45% 42%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
+        </text>
+        <text x={abe.cx} y={custY + 60} textAnchor="middle" fontSize="6.5"
           fill="hsl(215 10% 48%)" fontFamily="sans-serif">
           Black: 16 GB DDR4 · Copper 10G
         </text>
-        <text x={abe.cx} y={custY + 65} textAnchor="middle" fontSize="6.5"
+        <text x={abe.cx} y={custY + 68} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
-          3× QSFP · Nano-D · USB
+          3× QSFP · 2× 100Base-T · USB
         </text>
-        <text x={abe.cx} y={custY + 77} textAnchor="middle" fontSize="6.5"
-          fill="hsl(215 20% 38%)" fontFamily="sans-serif">
-          R+B: 2 Gb NVM · FPGA 1.5M SLC
+        <text x={abe.cx} y={custY + 76} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
         </text>
         <text x={abe.cx} y={custY + 88} textAnchor="middle" fontSize="7.5"
           fill="hsl(45 80% 62%)" fontFamily="sans-serif">
@@ -281,38 +286,72 @@ export function ProductLineage() {
         </text>
 
         {/* ── J2 Customer Node ──────────────────────────────────────────── */}
-        <rect x={j2.x} y={custY} width={custW} height={custH} rx="6"
+        <rect x={j2.x} y={custY} width={custW} height={j2H} rx="6"
           fill="hsl(222 47% 8%)" stroke="hsl(222 47% 22%)" strokeWidth="1.2"
         />
-        <text x={j2.cx} y={custY + 14} textAnchor="middle" fontSize="13"
+        <text x={j2.cx} y={custY + 12} textAnchor="middle" fontSize="11"
           fill="hsl(210 40% 92%)" fontWeight="700" fontFamily="sans-serif">
           J2
         </text>
-        <text x={j2.cx} y={custY + 25} textAnchor="middle" fontSize="7"
+        <text x={j2.cx} y={custY + 22} textAnchor="middle" fontSize="6.5"
           fill="hsl(215 20% 52%)" fontFamily="sans-serif">
           pLEO · Atomic Clock
         </text>
-        <text x={j2.cx} y={custY + 36} textAnchor="middle" fontSize="7"
+        {/* Red side */}
+        <text x={j2.cx} y={custY + 32} textAnchor="middle" fontSize="6.5"
           fill="hsl(2 60% 55%)" fontFamily="sans-serif">
           Red: 16 GB DDR4 · Copper 10G
         </text>
-        <text x={j2.cx} y={custY + 45} textAnchor="middle" fontSize="6.5"
+        <text x={j2.cx} y={custY + 40} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
           VTRFA · Nano-D · USB
         </text>
-        <text x={j2.cx} y={custY + 56} textAnchor="middle" fontSize="7"
-          fill="hsl(215 10% 48%)" fontFamily="sans-serif">
-          Black: 16 GB DDR4 · Copper 10G
+        <text x={j2.cx} y={custY + 48} textAnchor="middle" fontSize="6"
+          fill="hsl(2 45% 42%)" fontFamily="sans-serif">
+          1× RS-422 In · 1× RS-422 Out
         </text>
-        <text x={j2.cx} y={custY + 65} textAnchor="middle" fontSize="6.5"
+        <text x={j2.cx} y={custY + 56} textAnchor="middle" fontSize="6"
+          fill="hsl(2 45% 42%)" fontFamily="sans-serif">
+          1× 1PPS (LVDS) In
+        </text>
+        <text x={j2.cx} y={custY + 64} textAnchor="middle" fontSize="6"
+          fill="hsl(2 45% 42%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
+        </text>
+        {/* Black side */}
+        <text x={j2.cx} y={custY + 74} textAnchor="middle" fontSize="6.5"
+          fill="hsl(215 10% 48%)" fontFamily="sans-serif">
+          Black: 16 GB DDR4 · 2.5GBase-T
+        </text>
+        <text x={j2.cx} y={custY + 82} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
           VTRFA · Nano-D · USB
         </text>
-        <text x={j2.cx} y={custY + 77} textAnchor="middle" fontSize="6.5"
-          fill="hsl(215 20% 38%)" fontFamily="sans-serif">
-          R+B: 2 Gb NVM · FPGA 1.5M SLC
+        <text x={j2.cx} y={custY + 90} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          4× 1PPS · 4× 10 MHz
         </text>
-        <text x={j2.cx} y={custY + 88} textAnchor="middle" fontSize="7.5"
+        <text x={j2.cx} y={custY + 98} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          4× 2.5GBase-T
+        </text>
+        <text x={j2.cx} y={custY + 106} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          4× 100Base-T · 2× 1000Base-T
+        </text>
+        <text x={j2.cx} y={custY + 113} textAnchor="middle" fontSize="5.5"
+          fill="hsl(215 10% 30%)" fontFamily="sans-serif">
+          † Backplane d/c required
+        </text>
+        <text x={j2.cx} y={custY + 119} textAnchor="middle" fontSize="5.5"
+          fill="hsl(215 10% 30%)" fontFamily="sans-serif">
+          (Quad PHY — same as Baseline)
+        </text>
+        <text x={j2.cx} y={custY + 127} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
+        </text>
+        <text x={j2.cx} y={custY + 133} textAnchor="middle" fontSize="7.5"
           fill="hsl(45 80% 62%)" fontFamily="sans-serif">
           103 W
         </text>
@@ -329,25 +368,29 @@ export function ProductLineage() {
           fill="hsl(215 20% 52%)" fontFamily="sans-serif">
           pLEO Mission
         </text>
-        <text x={jl.cx} y={custY + 36} textAnchor="middle" fontSize="7"
+        <text x={jl.cx} y={custY + 34} textAnchor="middle" fontSize="6.5"
           fill="hsl(2 60% 55%)" fontFamily="sans-serif">
           Red: 16 GB DDR4 · Copper 10G
         </text>
-        <text x={jl.cx} y={custY + 45} textAnchor="middle" fontSize="6.5"
+        <text x={jl.cx} y={custY + 42} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
           VTRFA · Nano-D · USB
         </text>
-        <text x={jl.cx} y={custY + 56} textAnchor="middle" fontSize="7"
+        <text x={jl.cx} y={custY + 50} textAnchor="middle" fontSize="6"
+          fill="hsl(2 45% 42%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
+        </text>
+        <text x={jl.cx} y={custY + 60} textAnchor="middle" fontSize="6.5"
           fill="hsl(215 10% 48%)" fontFamily="sans-serif">
           Black: 16 GB DDR4 · Copper 10G
         </text>
-        <text x={jl.cx} y={custY + 65} textAnchor="middle" fontSize="6.5"
+        <text x={jl.cx} y={custY + 68} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
           VTRFA · Nano-D · USB
         </text>
-        <text x={jl.cx} y={custY + 77} textAnchor="middle" fontSize="6.5"
-          fill="hsl(215 20% 38%)" fontFamily="sans-serif">
-          R+B: 2 Gb NVM · FPGA 1.5M SLC
+        <text x={jl.cx} y={custY + 76} textAnchor="middle" fontSize="6"
+          fill="hsl(215 10% 37%)" fontFamily="sans-serif">
+          2 Gb NVM · FPGA 1.5M SLC
         </text>
         <text x={jl.cx} y={custY + 88} textAnchor="middle" fontSize="7.5"
           fill="hsl(45 80% 62%)" fontFamily="sans-serif">

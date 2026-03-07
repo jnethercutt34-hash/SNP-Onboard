@@ -245,7 +245,7 @@ export default function OverviewPage() {
                   </Badge>
                 </div>
                 <CardDescription className="text-xs leading-relaxed">
-                  Quad-channel 50 Gbps fiber-optic networking via AirBorn FOCuS VTRFA connector.
+                  4× 10G optical channels (50 Gbps aggregate) via AirBorn FOCuS VTRFA connector.
                   Radiation-hardened, sealed optical path. Standard for all baseline builds.
                 </CardDescription>
               </CardHeader>
@@ -279,6 +279,10 @@ export default function OverviewPage() {
                     ))}
                   </div>
                 </div>
+                <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-0.5">Management Interfaces</p>
+                  <p className="text-xs text-muted-foreground">4× 10/100/1000Base-T via Nano-D connector (1G Quad PHY)</p>
+                </div>
                 <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
                   View specs & datasheets →
                 </p>
@@ -299,7 +303,7 @@ export default function OverviewPage() {
                   </Badge>
                 </div>
                 <CardDescription className="text-xs leading-relaxed">
-                  Dual-channel 10GBASE-T copper networking via shielded RJ-45. Reduced SWaP-C
+                  4× 10GBASE-T copper networking via shielded RJ-45. Reduced SWaP-C
                   profile eliminates fiber management — optimised for proliferated LEO constellations.
                 </CardDescription>
               </CardHeader>
@@ -307,7 +311,7 @@ export default function OverviewPage() {
                 {/* Specs row */}
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {[
-                    { label: "Copper BW", value: "20 Gbps" },
+                    { label: "Copper BW", value: "40 Gbps" },
                     { label: "Power",     value: "3 W" },
                     { label: "Weight",    value: "25 g" },
                   ].map(({ label, value }) => (
@@ -321,6 +325,10 @@ export default function OverviewPage() {
                 <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
                   <p className="text-xs text-emerald-400 font-semibold uppercase tracking-widest mb-0.5">SWaP-C Savings vs Optical</p>
                   <p className="text-xs text-muted-foreground">−3 W · −15 g · No fiber management overhead</p>
+                </div>
+                <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-0.5">Management Interfaces</p>
+                  <p className="text-xs text-muted-foreground">4× 10/100/1000Base-T via Nano-D connector (1G Quad PHY)</p>
                 </div>
                 <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
                   View specs & datasheets →
@@ -364,6 +372,55 @@ export default function OverviewPage() {
                 <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
                   <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-0.5">QSFP+ Cages</p>
                   <p className="text-xs text-muted-foreground">3 × QSFP+ · 4 lanes each · SR4 / LR4 / 4×10G breakout</p>
+                </div>
+                <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-0.5">Management Interfaces</p>
+                  <p className="text-xs text-muted-foreground">4× 10/100/1000Base-T via Nano-D connector (1G Quad PHY)</p>
+                </div>
+                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
+                  View specs & datasheets →
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* ── 10G QSFP Passive ── */}
+          <Link href="/modules/mez-qsfp-passive" className="block group">
+            <Card className="hover:border-primary/50 transition-colors h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
+                    10G QSFP Passive XMC Mezzanine
+                  </CardTitle>
+                  <Badge variant="secondary" className="shrink-0 text-xs">
+                    DAC / AOC
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs leading-relaxed">
+                  3× QSFP+ passive cages for Direct Attach Copper or Active Optical Cable interconnects.
+                  No active transceiver modules required — simplified cable management, lower power.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: "Agg. BW",  value: "120 Gbps" },
+                    { label: "Power",    value: "5 W" },
+                    { label: "Weight",   value: "48 g" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-0.5">QSFP+ Passive Cages</p>
+                  <p className="text-xs text-muted-foreground">3 × QSFP+ · DAC ≤5 m · AOC ≤100 m · 4×10G breakout</p>
+                </div>
+                <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widests mb-0.5">Management Interfaces</p>
+                  <p className="text-xs text-muted-foreground">4× 10/100/1000Base-T via Nano-D connector (1G Quad PHY)</p>
                 </div>
                 <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
                   View specs & datasheets →
@@ -430,50 +487,6 @@ export default function OverviewPage() {
             </Card>
           </Link>
 
-          {/* ── Atomic Clock ── */}
-          <Link href="/modules/timing-atomic-clock" className="block group">
-            <Card className="hover:border-primary/50 transition-colors h-full">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="font-heading text-base leading-snug group-hover:text-primary transition-colors">
-                    Timing &amp; Networking Expansion
-                  </CardTitle>
-                  <Badge variant="secondary" className="shrink-0 text-xs">
-                    Expansion
-                  </Badge>
-                </div>
-                <CardDescription className="text-xs leading-relaxed">
-                  Chip-scale atomic clock (CSAC) for nanosecond-class time synchronization
-                  independent of GPS. IEEE 1588v2 PTP Grandmaster. Occupies one spare VPX slot.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {[
-                    { label: "Holdover",  value: "< 100 ns/day" },
-                    { label: "Power",     value: "13 W" },
-                    { label: "Weight",    value: "275 g" },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="rounded-md bg-secondary/30 px-2 py-1.5">
-                      <p className="text-xs text-muted-foreground uppercase tracking-widest leading-none mb-1">{label}</p>
-                      <p className="text-sm font-semibold text-foreground font-mono">{value}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {["10 MHz Ref", "1 PPS", "PTP IEEE 1588v2", "GPS Holdover"].map((feat) => (
-                    <span key={feat}
-                      className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-xs text-muted-foreground">
-                      {feat}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors text-right pt-1">
-                  View specs & datasheets →
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
 
           {/* ── CSAC Precision Timing Module ── */}
           <Card className="h-full border-amber-500/30 bg-amber-500/5">
@@ -514,6 +527,10 @@ export default function OverviewPage() {
                     {feat}
                   </span>
                 ))}
+              </div>
+              <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-0.5">Management Interfaces</p>
+                <p className="text-xs text-muted-foreground">4× 10/100/1000Base-T via Nano-D connector (1G Quad PHY)</p>
               </div>
               <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2">
                 <p className="text-xs text-amber-400 font-semibold uppercase tracking-widest mb-0.5">Red / Black Domain Filtering</p>

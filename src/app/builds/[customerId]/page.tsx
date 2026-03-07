@@ -31,6 +31,8 @@ function delta(n: number): string {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+const MEZZANINE_TYPES = new Set<ComponentType>(["Mezzanine_XMC", "Networking_Mezzanine"]);
+
 export default async function BuildDetailPage({
   params,
 }: {
@@ -183,7 +185,14 @@ export default async function BuildDetailPage({
                   >
                     <div className="flex items-start justify-between gap-2">
                       {comp.detailId ? (
-                        <Link href={`/modules/${comp.detailId}`} className="flex items-center gap-1 group/link">
+                        <Link
+                          href={
+                            MEZZANINE_TYPES.has(comp.type)
+                              ? `/builds/${customerId}/modules/${comp.detailId}`
+                              : `/modules/${comp.detailId}`
+                          }
+                          className="flex items-center gap-1 group/link"
+                        >
                           <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors leading-snug">
                             {comp.name}
                           </p>
