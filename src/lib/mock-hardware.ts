@@ -124,7 +124,7 @@ const mez_copper_10g: HardwareComponent = {
   powerDrawWatts: 3,
   weightGrams: 25,
   description:
-    "Dual-channel 10 Gbps copper Ethernet mezzanine. 10GBase-T · Cat-6A. Reduced SWaP-C profile for pLEO missions with lower radiation-hardening overhead.",
+    "Quad-channel 10 Gbps copper Ethernet mezzanine. 10GBase-T · Cat-6A. Reduced SWaP-C profile for pLEO missions with lower radiation-hardening overhead.",
   detailId: "net-10g-copper",
 };
 
@@ -218,8 +218,8 @@ function makeBuild(
 }
 
 // ─── Builds ──────────────────────────────────────────────────────────────────
-// Chassis slot order (left → right):
-//   0: PSU Red | 1: Spare | 2: Spare | 3: GPP Red | 4: Crypto | 5: GPP Black | 6: PSU Black
+// Chassis slot order (left → right, 1-indexed):
+//   1: PSU Red | 2: Spare | 3: Spare | 4: GPP Red | 5: Crypto | 6: GPP Black | 7: PSU Black
 
 export const BUILDS: SystemBuild[] = [
   // Baseline: 5 + (32+6) + 10 + (31+6) + 6 = 96 W
@@ -228,11 +228,11 @@ export const BUILDS: SystemBuild[] = [
     "Baseline",
     "Standard SNP reference configuration — dual GPP with Optical 10G mezzanines, crypto unit, and dual power converters.",
     [
-      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []               },
-      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_optical_10g] },
-      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []               },
-      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_optical_10g] },
-      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []               },
+      { slotNumber: 1, baseCard: psu_red,        attachedMezzanines: []               },
+      { slotNumber: 4, baseCard: gpp_base_red,   attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 5, baseCard: crypto_unit,    attachedMezzanines: []               },
+      { slotNumber: 6, baseCard: gpp_base_black, attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 7, baseCard: psu_black,      attachedMezzanines: []               },
     ]
   ),
 
@@ -243,27 +243,27 @@ export const BUILDS: SystemBuild[] = [
     "ABE",
     "Proliferated Low Earth Orbit variant. Copper 10G mezzanines replace Optical on both GPP slots for reduced SWaP-C.",
     [
-      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []               },
-      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []               },
-      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []               },
+      { slotNumber: 1, baseCard: psu_red,        attachedMezzanines: []               },
+      { slotNumber: 4, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 5, baseCard: crypto_unit,    attachedMezzanines: []               },
+      { slotNumber: 6, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 7, baseCard: psu_black,      attachedMezzanines: []               },
     ]
   ),
 
-  // J2 pLEO: Copper mezzanines + Atomic Clock in slot 1
+  // J2 pLEO: Copper mezzanines + Atomic Clock in slot 2
   // 5 + 13 + (32+3) + 10 + (31+3) + 6 = 103 W
   makeBuild(
     "customer-b-pleo",
     "J2",
     "Proliferated Low Earth Orbit variant with precision timing. Copper 10G mezzanines on both GPP slots plus Atomic Clock expansion for nanosecond-class synchronization.",
     [
-      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []               },
-      { slotNumber: 1, baseCard: timing_atomic,  attachedMezzanines: []               },
-      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []               },
-      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []               },
+      { slotNumber: 1, baseCard: psu_red,        attachedMezzanines: []               },
+      { slotNumber: 3, baseCard: timing_atomic,  attachedMezzanines: []               },
+      { slotNumber: 4, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 5, baseCard: crypto_unit,    attachedMezzanines: []               },
+      { slotNumber: 6, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 7, baseCard: psu_black,      attachedMezzanines: []               },
     ]
   ),
 
@@ -274,11 +274,11 @@ export const BUILDS: SystemBuild[] = [
     "JL",
     "Proliferated Low Earth Orbit variant. Copper 10G mezzanines on both GPP slots, tailored for high-revisit pLEO mission profile.",
     [
-      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []               },
-      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []               },
-      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
-      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []               },
+      { slotNumber: 1, baseCard: psu_red,        attachedMezzanines: []               },
+      { slotNumber: 4, baseCard: gpp_base_red,   attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 5, baseCard: crypto_unit,    attachedMezzanines: []               },
+      { slotNumber: 6, baseCard: gpp_base_black, attachedMezzanines: [mez_copper_10g] },
+      { slotNumber: 7, baseCard: psu_black,      attachedMezzanines: []               },
     ]
   ),
 
@@ -289,11 +289,11 @@ export const BUILDS: SystemBuild[] = [
     "FMS",
     "Internal R&D prototype currently in the lab. Reflects the full baseline configuration with all rolled-in updates. Used for hardware validation, firmware integration testing, and pre-production qualification.",
     [
-      { slotNumber: 0, baseCard: psu_red,        attachedMezzanines: []                },
-      { slotNumber: 3, baseCard: gpp_base_red,   attachedMezzanines: [mez_optical_10g] },
-      { slotNumber: 4, baseCard: crypto_unit,    attachedMezzanines: []                },
-      { slotNumber: 5, baseCard: gpp_base_black, attachedMezzanines: [mez_optical_10g] },
-      { slotNumber: 6, baseCard: psu_black,      attachedMezzanines: []                },
+      { slotNumber: 1, baseCard: psu_red,        attachedMezzanines: []                },
+      { slotNumber: 4, baseCard: gpp_base_red,   attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 5, baseCard: crypto_unit,    attachedMezzanines: []                },
+      { slotNumber: 6, baseCard: gpp_base_black, attachedMezzanines: [mez_optical_10g] },
+      { slotNumber: 7, baseCard: psu_black,      attachedMezzanines: []                },
     ]
   ),
 ];

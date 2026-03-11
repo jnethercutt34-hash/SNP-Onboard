@@ -52,12 +52,12 @@ The mezzanine connects to the GPP FPGA via the XMC P15 connector carrying:
    - 3.3V, 5V, 12V power rails
 
 4.1 Optical Mezzanine (Baseline)
-   Connects the 4 × 10G SerDes lanes to the AirBorn VTRFA FOCuS optical connector.
+   Connects the 4 × 10G SerDes lanes to the AirBorn VTRAF FOCuS optical connector.
    On-board: Quad PHY (VSC8504), 1.2 TB NVMe SSD (Virtium StorFly), 64 GB eMMC (Virtium).
    Power: 6 W total (PHY 1.2 W + SSD 4.3 W + eMMC 0.5 W)
 
 4.2 Copper Mezzanine (pLEO variant)
-   Routes 2 × 10G SerDes lanes to dual shielded RJ-45 (10GBASE-T).
+   Routes 4 × 10G SerDes lanes to quad shielded RJ-45 (10GBASE-T). ABE Black side exception: 3 of 4 lanes active (3× QSFP configuration).
    No on-board storage. Power: 3 W.
    SWaP-C trade: saves 3 W and 15 g vs optical. Used in ABE, J2, and JL builds.
 

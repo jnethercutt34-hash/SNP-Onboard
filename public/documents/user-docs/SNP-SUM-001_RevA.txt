@@ -64,8 +64,8 @@ ERR_0x06 — SDRAM ECC Double-Bit Error
    Recovery: GPP reset and SDRAM re-initialization.
 
 ERR_0x07 — Optical Link Loss of Signal
-   Meaning:  VTRFA optical connector has lost signal on one or more channels
-   Action:   Check fiber cable connection at VTRFA connector (J1).
+   Meaning:  VTRAF optical connector has lost signal on one or more channels
+   Action:   Check fiber cable connection at VTRAF connector (J1).
              Inspect for contamination or physical damage.
              Verify remote end is transmitting.
    Recovery: Automatic when signal is restored and lock is re-acquired.

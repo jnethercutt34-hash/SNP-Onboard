@@ -492,13 +492,13 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
     category: "Networking",
     tagline: "Quad-Channel SFP+ · 1G PHY · Virtium 1.2TB SSD · 64GB eMMC",
     overview:
-      "The 10G Optical XMC Mezzanine is a high-density expansion card that bolts onto each GPP base card. It provides quad-channel 10 Gbps fiber-optic networking (4 × 12.5 Gbps via AirBorn FOCuS VTRFA connector), a four-port 1G Quad PHY for management-plane traffic, a Virtium 1.2 TB M.2 NVMe SSD for high-capacity mission data storage, and a Virtium 64 GB eMMC for OS boot and partition storage. Total aggregate optical bandwidth is 50 Gbps per mezzanine (100 Gbps across both GPP cards). The mezzanine conforms to the VITA 42 XMC standard and connects to the host GPP card via P15/P16 XMC connectors.",
+      "The 10G Optical XMC Mezzanine is a high-density expansion card that bolts onto each GPP base card. It provides quad-channel 10 Gbps fiber-optic networking (4 × 12.5 Gbps via AirBorn FOCuS VTRAF connector), a four-port 1G Quad PHY for management-plane traffic, a Virtium 1.2 TB M.2 NVMe SSD for high-capacity mission data storage, and a Virtium 64 GB eMMC for OS boot and partition storage. Total aggregate optical bandwidth is 50 Gbps per mezzanine (100 Gbps across both GPP cards). The mezzanine conforms to the VITA 42 XMC standard and connects to the host GPP card via P15/P16 XMC connectors.",
     specs: [
       { label: "Form Factor",       value: "VITA 42 XMC (conduction-cooled)" },
       { label: "Host Interface",    value: "P15/P16 XMC connectors → GPP card" },
-      { label: "Optical Channels",  value: "4 × 12.5 Gbps (VTRFA AirBorn FOCuS)" },
+      { label: "Optical Channels",  value: "4 × 12.5 Gbps (VTRAF AirBorn FOCuS)" },
       { label: "Aggregate Optical BW", value: "50 Gbps full-duplex" },
-      { label: "Optical Connector", value: "AirBorn FOCuS VTRFA (faceplate)" },
+      { label: "Optical Connector", value: "AirBorn FOCuS VTRAF (faceplate)" },
       { label: "GbE Ports",         value: "4 × 1000BASE-T (Microchip VSC8504)" },
       { label: "GbE Connector",     value: "51-pin Nano connector (faceplate)" },
       { label: "M.2 SSD",           value: "Virtium StorFly 1.2 TB NVMe Gen 3 M.2 2280" },
@@ -518,7 +518,7 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
         pages: 88,
         fileSize: "5.0 MB",
         aiSummary:
-          "Hardware reference covering the XMC mezzanine architecture: VTRFA optical cage, XMC P15/P16 connector pinout, Microchip VSC8504 Quad PHY RGMII routing, Virtium M.2 and eMMC power and signal conditioning, and the debug Micro-USB JTAG bridge circuit. Thermal interface design for conduction cooling via the XMC wedge lock to the host GPP card rail is detailed with interface resistance budgets. The manual includes firmware register maps for VSC8504 MDIO management and Virtium SMART telemetry polling.",
+          "Hardware reference covering the XMC mezzanine architecture: VTRAF optical cage, XMC P15/P16 connector pinout, Microchip VSC8504 Quad PHY RGMII routing, Virtium M.2 and eMMC power and signal conditioning, and the debug Micro-USB JTAG bridge circuit. Thermal interface design for conduction cooling via the XMC wedge lock to the host GPP card rail is detailed with interface resistance budgets. The manual includes firmware register maps for VSC8504 MDIO management and Virtium SMART telemetry polling.",
       },
       {
         id: "ds-vtraf-aoc",
@@ -610,9 +610,9 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
     name: "10 Gbps Copper Networking",
     shortName: "10G Copper",
     category: "Networking",
-    tagline: "Dual-Channel · 10GBASE-T · pLEO SWaP-C Optimized",
+    tagline: "Quad-Channel · 10GBASE-T · pLEO SWaP-C Optimized",
     overview:
-      "The 10 Gbps Copper Networking module is a standalone expansion card used in pLEO configurations as a lower-SWaP-C alternative to fiber-optic networking. It provides dual-channel 10GBASE-T Ethernet over standard copper cabling (Cat-6A or better), eliminating the need for SFP+ transceivers and optical fiber management while maintaining 10 Gbps throughput per channel. The reduced radiation-hardening overhead compared to the optical interface makes it cost-effective for proliferated LEO constellations.",
+      "The 10 Gbps Copper Networking module is a standalone expansion card used in pLEO configurations as a lower-SWaP-C alternative to fiber-optic networking. It provides quad-channel 10GBASE-T Ethernet over standard copper cabling (Cat-6A or better), eliminating the need for SFP+ transceivers and optical fiber management while maintaining 10 Gbps throughput per channel. The reduced radiation-hardening overhead compared to the optical interface makes it cost-effective for proliferated LEO constellations.",
     specs: [
       { label: "Channels", value: "4 × 10GBASE-T (quad-channel)" },
       { label: "Per-Lane Speed", value: "10 Gbps full-duplex" },
@@ -1060,15 +1060,15 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
 
   "conn-vtrfa": {
     id: "conn-vtrfa",
-    name: "VTRFA AirBorn FOCuS Connector",
-    shortName: "VTRFA",
+    name: "VTRAF AirBorn FOCuS Connector",
+    shortName: "VTRAF",
     category: "Connector",
     tagline: "4-Channel · 12.5 Gbps/ch · Active Optical · Space-Qualified",
     overview:
-      "The VTRFA is the AirBorn FOCuS (Fiber Optic Connection Using Signals) active optical connector on the GPP faceplate. It provides the primary high-speed data-plane optical link between the SNP chassis and external subsystems. Each connector carries four independent full-duplex optical channels at 12.5 Gbps (50 Gbps aggregate), using radiation-hardened active optical cable (AOC) assemblies. The sealed connector body eliminates the need for field-cleanable fiber ends — the optical path is permanently sealed at manufacture, removing FOD (Foreign Object Debris) as a failure mode. Cables install and mate identically to standard copper connectors.",
+      "The VTRAF is the AirBorn FOCuS (Fiber Optic Connection Using Signals) active optical connector on the GPP faceplate. It provides the primary high-speed data-plane optical link between the SNP chassis and external subsystems. Each connector carries four independent full-duplex optical channels at 12.5 Gbps (50 Gbps aggregate), using radiation-hardened active optical cable (AOC) assemblies. The sealed connector body eliminates the need for field-cleanable fiber ends — the optical path is permanently sealed at manufacture, removing FOD (Foreign Object Debris) as a failure mode. Cables install and mate identically to standard copper connectors.",
     specs: [
       { label: "Manufacturer",       value: "AirBorn (FOCuS series)" },
-      { label: "Part Family",        value: "VTRFA Active Optical Cable Connector" },
+      { label: "Part Family",        value: "VTRAF Active Optical Cable Connector" },
       { label: "Channels",           value: "4 × full-duplex optical lanes" },
       { label: "Per-Lane Rate",      value: "12.5 Gbps NRZ" },
       { label: "Aggregate BW",       value: "50 Gbps (4T + 4R)" },
@@ -1129,7 +1129,7 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
     related: [
       { detailId: "quad-phy-1g",   name: "1G Quad PHY (VSC8504)",    relationship: "Primary signal source" },
       { detailId: "optical-10g",   name: "10G Optical XMC Mezzanine",relationship: "Host mezzanine" },
-      { detailId: "conn-vtrfa",    name: "VTRFA Optical Connector",   relationship: "Adjacent GPP faceplate connector" },
+      { detailId: "conn-vtrfa",    name: "VTRAF Optical Connector",   relationship: "Adjacent GPP faceplate connector" },
       { detailId: "conn-micro-usb",name: "Micro USB Debug Port",      relationship: "Adjacent GPP faceplate connector" },
     ],
   },
@@ -1159,7 +1159,7 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
     related: [
       { detailId: "gpp-universal",name: "Universal GPP Card",         relationship: "Host faceplate" },
       { detailId: "fpga-1m5-slc", name: "FPGA — 1.5M SLC",           relationship: "JTAG boundary scan target" },
-      { detailId: "conn-vtrfa",   name: "VTRFA Optical Connector",    relationship: "Adjacent GPP faceplate connector" },
+      { detailId: "conn-vtrfa",   name: "VTRAF Optical Connector",    relationship: "Adjacent GPP faceplate connector" },
     ],
   },
 
@@ -1297,7 +1297,7 @@ export const COMPONENT_DETAILS: Record<string, ComponentDetail> = {
     related: [
       { detailId: "net-10g-copper",name: "10G Copper Mezzanine",   relationship: "Host module" },
       { detailId: "gpp-universal", name: "Universal GPP Card",      relationship: "Host base card" },
-      { detailId: "conn-vtrfa",   name: "VTRFA Optical Connector",  relationship: "Optical networking alternative" },
+      { detailId: "conn-vtrfa",   name: "VTRAF Optical Connector",  relationship: "Optical networking alternative" },
     ],
   },
 

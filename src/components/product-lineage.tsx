@@ -178,6 +178,10 @@ export function ProductLineage() {
           fill="hsl(215 20% 35%)" fontFamily="sans-serif">
           HW &amp; FW validation
         </text>
+        <text x={fms.cx} y={fms.y + 151} textAnchor="middle" fontSize="7.5"
+          fill="hsl(45 80% 62%)" fontFamily="sans-serif">
+          96 W
+        </text>
 
         {/* ── Baseline Node ─────────────────────────────────────────────── */}
         <rect x={bl.x} y={bl.y} width={bl.w} height={bl.h} rx="8"
@@ -262,7 +266,7 @@ export function ProductLineage() {
         </text>
         <text x={abe.cx} y={custY + 42} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
-          VTRFA · 4× 1000Base-T · USB
+          VTRAF · 4× 1000Base-T · USB
         </text>
         <text x={abe.cx} y={custY + 50} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
@@ -300,11 +304,11 @@ export function ProductLineage() {
         {/* Red side */}
         <text x={j2.cx} y={custY + 32} textAnchor="middle" fontSize="6.5"
           fill="hsl(2 60% 55%)" fontFamily="sans-serif">
-          Red: 16 GB DDR4 · Copper 10G
+          Red: 16 GB DDR4 · Optical 10G
         </text>
         <text x={j2.cx} y={custY + 40} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
-          VTRFA · Nano-D · USB
+          VTRAF · Nano-D · USB
         </text>
         <text x={j2.cx} y={custY + 48} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
@@ -325,7 +329,7 @@ export function ProductLineage() {
         </text>
         <text x={j2.cx} y={custY + 82} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
-          VTRFA · Nano-D · USB
+          VTRAF · Nano-D · USB
         </text>
         <text x={j2.cx} y={custY + 90} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
@@ -351,7 +355,7 @@ export function ProductLineage() {
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
           2 Gb NVM · FPGA 1.5M SLC
         </text>
-        <text x={j2.cx} y={custY + 133} textAnchor="middle" fontSize="7.5"
+        <text x={j2.cx} y={custY + 145} textAnchor="middle" fontSize="7.5"
           fill="hsl(45 80% 62%)" fontFamily="sans-serif">
           103 W
         </text>
@@ -374,7 +378,7 @@ export function ProductLineage() {
         </text>
         <text x={jl.cx} y={custY + 42} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
-          VTRFA · Nano-D · USB
+          VTRAF · Nano-D · USB
         </text>
         <text x={jl.cx} y={custY + 50} textAnchor="middle" fontSize="6"
           fill="hsl(2 45% 42%)" fontFamily="sans-serif">
@@ -386,7 +390,7 @@ export function ProductLineage() {
         </text>
         <text x={jl.cx} y={custY + 68} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">
-          VTRFA · Nano-D · USB
+          VTRAF · Nano-D · USB
         </text>
         <text x={jl.cx} y={custY + 76} textAnchor="middle" fontSize="6"
           fill="hsl(215 10% 37%)" fontFamily="sans-serif">

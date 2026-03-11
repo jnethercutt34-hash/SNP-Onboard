@@ -31,7 +31,7 @@ export const CUSTOMER_MODULE_OVERRIDES: Record<string, CustomerModuleOverride> =
   "baseline::optical-10g": {
     summary: "Standard configuration — all interfaces fully active on both Red and Black GPP slots.",
     interfaces: [
-      { name: "4× 10G Optical (VTRFA)", status: "active",  detail: "All 4 SFP+ channels active — 50 Gbps full-duplex" },
+      { name: "4× 10G Optical (VTRAF)", status: "active",  detail: "All 4 SFP+ channels active — 50 Gbps full-duplex" },
       { name: "4× 1000Base-T (Nano-D)", status: "active",  detail: "Management plane — all 4 ports active" },
       { name: "1.2 TB M.2 NVMe SSD",   status: "active",  detail: "Mission data storage" },
       { name: "64 GB eMMC",             status: "active",  detail: "OS boot storage" },
@@ -43,7 +43,7 @@ export const CUSTOMER_MODULE_OVERRIDES: Record<string, CustomerModuleOverride> =
   "fms-irad::optical-10g": {
     summary: "Lab prototype — full baseline optical configuration under hardware validation.",
     interfaces: [
-      { name: "4× 10G Optical (VTRFA)", status: "active",  detail: "All 4 SFP+ channels active — lab instrumented" },
+      { name: "4× 10G Optical (VTRAF)", status: "active",  detail: "All 4 SFP+ channels active — lab instrumented" },
       { name: "4× 1000Base-T (Nano-D)", status: "active",  detail: "Management plane — all 4 ports active" },
       { name: "1.2 TB M.2 NVMe SSD",   status: "active",  detail: "Mission data storage — under test" },
       { name: "64 GB eMMC",             status: "active",  detail: "OS boot storage" },
@@ -55,15 +55,15 @@ export const CUSTOMER_MODULE_OVERRIDES: Record<string, CustomerModuleOverride> =
   },
 
   // ── ABE ───────────────────────────────────────────────────────────────────
-  // Red GPP: Optical mezzanine (VTRFA) + full 4× 1000Base-T management
+  // Red GPP: Optical mezzanine (VTRAF) + full 4× 1000Base-T management
   // Black GPP: 3× QSFP mezzanine + only 2× 100Base-T active from Nano-D Quad PHY
   "customer-a-pleo::optical-10g": {
-    summary: "ABE Red GPP — VTRFA optical connector for mission data; full 4× 1000Base-T management via Nano-D.",
+    summary: "ABE Red GPP — VTRAF optical connector for mission data; full 4× 1000Base-T management via Nano-D.",
     perSide: {
       red: {
         note: "Red GPP mezzanine — all interfaces active",
         interfaces: [
-          { name: "VTRFA FOCuS Optical",    status: "active",  detail: "Primary mission data link — all 4 SFP+ channels" },
+          { name: "VTRAF FOCuS Optical",    status: "active",  detail: "Primary mission data link — all 4 SFP+ channels" },
           { name: "4× 1000Base-T (Nano-D)", status: "active",  detail: "Management plane — all 4 ports active" },
           { name: "1.2 TB M.2 NVMe SSD",   status: "active",  detail: "Mission data storage" },
           { name: "64 GB eMMC",             status: "active",  detail: "OS boot storage" },
@@ -89,21 +89,21 @@ export const CUSTOMER_MODULE_OVERRIDES: Record<string, CustomerModuleOverride> =
       },
     },
     notes: [
-      "VTRFA (Red) and QSFP cages (Black) are faceplate assemblies on separate physical GPP slots.",
+      "VTRAF (Red) and QSFP cages (Black) are faceplate assemblies on separate physical GPP slots.",
       "Nano-D 51-pin connector carries the 1G Quad PHY management traffic; ABE Black uses only 2 of the 4 PHY ports.",
     ],
   },
 
   // ── J2 ────────────────────────────────────────────────────────────────────
-  // Red GPP: Optical mezzanine, VTRFA + RS-422 + LVDS 1PPS
+  // Red GPP: Optical mezzanine, VTRAF + RS-422 + LVDS 1PPS
   // Black GPP: Copper mezzanine at 2.5GBase-T + timing outputs + backplane daughter card
   "customer-b-pleo::optical-10g": {
-    summary: "J2 Red GPP — VTRFA optical for mission data; RS-422 serial and LVDS 1PPS timing interfaces also active.",
+    summary: "J2 Red GPP — VTRAF optical for mission data; RS-422 serial and LVDS 1PPS timing interfaces also active.",
     perSide: {
       red: {
         note: "Red GPP mezzanine — optical + discrete control interfaces",
         interfaces: [
-          { name: "VTRFA FOCuS Optical",    status: "active",  detail: "Primary mission data link" },
+          { name: "VTRAF FOCuS Optical",    status: "active",  detail: "Primary mission data link" },
           { name: "4× 1000Base-T (Nano-D)", status: "active",  detail: "Management plane — all 4 ports active" },
           { name: "1× RS-422 Input",        status: "active",  detail: "Control / telemetry serial input" },
           { name: "1× RS-422 Output",       status: "active",  detail: "Control / telemetry serial output" },

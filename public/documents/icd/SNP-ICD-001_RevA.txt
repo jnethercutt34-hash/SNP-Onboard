@@ -20,7 +20,7 @@ external connector pinouts, protocol definitions, and timing requirements.
 3. CONNECTOR INTERFACE DEFINITIONS
 -----------------------------------
 
-3.1 VTRFA AirBorn FOCuS Optical Connector (J1)
+3.1 VTRAF AirBorn FOCuS Optical Connector (J1)
    Location:     GPP card front panel, upper-left
    Channels:     4 (Tx/Rx pairs)
    Protocol:     10 Gbps NRZ per lane, 40 Gbps aggregate
@@ -116,7 +116,7 @@ external connector pinouts, protocol definitions, and timing requirements.
    ERR_0x04    FPGA configuration CRC error
    ERR_0x05    NVM Flash ECC uncorrectable error
    ERR_0x06    SDRAM ECC double-bit error
-   ERR_0x07    Optical link loss of signal (VTRFA connector)
+   ERR_0x07    Optical link loss of signal (VTRAF connector)
    ERR_0x08    Crypto module FIPS self-test failure
    ERR_0x09    Loss of sync with Timing & Networking module
    ERR_0x0A    FPGA partial reconfiguration timeout (>30s)

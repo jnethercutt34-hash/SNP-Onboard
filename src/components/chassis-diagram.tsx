@@ -1,6 +1,9 @@
-import type { VPXSlot } from "@/lib/mock-hardware";
+"use client";
 
-// ── Layout ────────────────────────────────────────────────────────────────────
+import { useState, useCallback, type MouseEvent as ReactMouseEvent } from "react";
+import type { VPXSlot, HardwareComponent } from "@/lib/mock-hardware";
+
+// ── Layout constants ─────────────────────────────────────────────────────────
 
 const VW = 910;
 const VH = 220;
@@ -8,29 +11,40 @@ const EAR = 28;           // rack ear width
 const RAIL = 20;          // top / bottom rail height
 const SLOTS = 7;
 const TOTAL_W = VW - EAR * 2;          // 854
-const SW = TOTAL_W / SLOTS;            // ≈ 122
+const SW = TOTAL_W / SLOTS;            // ~122
 const FW = Math.round(SW * 0.9);       // face plate width (~90% of slot, gaps between modules)
 const FY = RAIL;                       // face plate top y
 const FH = VH - RAIL * 2;             // face plate height = 180
 
 function fx(slot: number) {
-  return EAR + slot * SW;
+  return EAR + (slot - 1) * SW;
 }
 
-// Slot positions are now carried directly by VPXSlot.slotNumber (0–6).
+// ── Tooltip data ─────────────────────────────────────────────────────────────
 
-// ── Shared sub-elements ───────────────────────────────────────────────────────
+interface TooltipInfo {
+  slotNumber: number;
+  baseCard: HardwareComponent;
+  mezzanines: HardwareComponent[];
+  isEmpty: false;
+}
 
-// Recessed pull handle — flat industrial style matching product photo
+interface EmptyTooltipInfo {
+  slotNumber: number;
+  isEmpty: true;
+}
+
+type SlotTooltip = TooltipInfo | EmptyTooltipInfo;
+
+// ── Shared sub-elements ──────────────────────────────────────────────────────
+
 function Handles({ x }: { x: number }) {
   return (
     <>
-      {/* top recessed handle groove */}
       <rect x={x + 6} y={FY + 4} width={FW - 12} height={8} rx={1.5}
             fill="#050505" stroke="#1a1a1a" strokeWidth="0.7"/>
       <rect x={x + 10} y={FY + 5.5} width={FW - 20} height={5} rx={1}
             fill="#080808" stroke="#222" strokeWidth="0.5"/>
-      {/* bottom recessed handle groove */}
       <rect x={x + 6} y={FY + FH - 12} width={FW - 12} height={8} rx={1.5}
             fill="#050505" stroke="#1a1a1a" strokeWidth="0.7"/>
       <rect x={x + 10} y={FY + FH - 10.5} width={FW - 20} height={5} rx={1}
@@ -39,7 +53,6 @@ function Handles({ x }: { x: number }) {
   );
 }
 
-// Blue-only LEDs matching product photo illumination
 function Leds({ x, count = 3 }: { x: number; count?: number }) {
   return (
     <>
@@ -54,7 +67,6 @@ function Leds({ x, count = 3 }: { x: number; count?: number }) {
   );
 }
 
-// Blue-lit rectangular connector port (matches the ports visible in product photo)
 function BluePort({ px, py, w = 20, h = 14 }: { px: number; py: number; w?: number; h?: number }) {
   return (
     <g>
@@ -70,12 +82,10 @@ function BluePort({ px, py, w = 20, h = 14 }: { px: number; py: number; w?: numb
   );
 }
 
-// ── Connector helpers ─────────────────────────────────────────────────────────
+// ── Connector helpers ────────────────────────────────────────────────────────
 
-// MDM (Micro-D Miniature) connector — vertical/portrait orientation
-// pins = 9 or 15; 2 columns of pins running top-to-bottom
 function MdmV({ px, py, pins }: { px: number; py: number; pins: 9 | 15 }) {
-  const rows   = Math.ceil(pins / 2);   // 9→5 rows, 15→8 rows
+  const rows   = Math.ceil(pins / 2);
   const bodyW  = 16;
   const bodyH  = rows * 5 + 10;
   const pinR   = 1.1;
@@ -85,16 +95,12 @@ function MdmV({ px, py, pins }: { px: number; py: number; pins: 9 | 15 }) {
 
   return (
     <g>
-      {/* Outer metal shell */}
       <rect x={px} y={py} width={bodyW} height={bodyH} rx={2}
             fill="#080808" stroke="#252525" strokeWidth="0.9"/>
-      {/* Inner insert */}
       <rect x={px + 2} y={py + 2} width={bodyW - 4} height={bodyH - 4} rx={1}
             fill="#050505" stroke="#1a1a1a" strokeWidth="0.5"/>
-      {/* Threaded jack-screw holes at top and bottom */}
       <circle cx={px + bodyW / 2} cy={py + 1.5}          r={1.5} fill="#030303" stroke="#1e1e1e" strokeWidth="0.4"/>
       <circle cx={px + bodyW / 2} cy={py + bodyH - 1.5}  r={1.5} fill="#030303" stroke="#1e1e1e" strokeWidth="0.4"/>
-      {/* Pins — col 0 has ceil(pins/2) pins, col 1 has floor(pins/2) */}
       {Array.from({ length: Math.ceil(pins / 2) }, (_, r) => (
         <circle key={`c0r${r}`} cx={col0X} cy={startY + r * 5} r={pinR}
                 fill="#0a0a0a" stroke="#2e2e2e" strokeWidth="0.5"/>
@@ -107,8 +113,6 @@ function MdmV({ px, py, pins }: { px: number; py: number; pins: 9 | 15 }) {
   );
 }
 
-// VTRFA Airborn — wide high-density rectangular panel connector
-// Represented as a broad rectangular shell with 2 rows of dense pins
 function VtrfaAirborn({ px, py, w = 72 }: { px: number; py: number; w?: number }) {
   const h = 18;
   const pinCols = 18;
@@ -116,27 +120,22 @@ function VtrfaAirborn({ px, py, w = 72 }: { px: number; py: number; w?: number }
 
   return (
     <g>
-      {/* Outer shell — wide rectangular */}
       <rect x={px} y={py} width={w} height={h} rx={1.5}
             fill="#080808" stroke="#252525" strokeWidth="0.9"/>
-      {/* Inner insert */}
       <rect x={px + 2} y={py + 2} width={w - 4} height={h - 4} rx={1}
             fill="#050505" stroke="#181818" strokeWidth="0.5"/>
-      {/* 2 rows of pins */}
       {Array.from({ length: pinCols }, (_, i) => (
         <g key={i}>
           <circle cx={px + 5 + i * pinSpX} cy={py + 6}  r={1.0} fill="#0a0a0a" stroke="#2a2a2a" strokeWidth="0.4"/>
           <circle cx={px + 5 + i * pinSpX} cy={py + 12} r={1.0} fill="#0a0a0a" stroke="#2a2a2a" strokeWidth="0.4"/>
         </g>
       ))}
-      {/* Corner retention screws */}
       <circle cx={px + 4}     cy={py + h / 2} r={2.5} fill="#060606" stroke="#1e1e1e" strokeWidth="0.5"/>
       <circle cx={px + w - 4} cy={py + h / 2} r={2.5} fill="#060606" stroke="#1e1e1e" strokeWidth="0.5"/>
     </g>
   );
 }
 
-// 51-pin nano connector — 3 rows × 17 pins, compact rectangular housing
 function NanoConn({ px, py, w = 52 }: { px: number; py: number; w?: number }) {
   const h = 16;
   const cols = 17;
@@ -148,7 +147,6 @@ function NanoConn({ px, py, w = 52 }: { px: number; py: number; w?: number }) {
             fill="#080808" stroke="#222222" strokeWidth="0.9"/>
       <rect x={px + 2} y={py + 2} width={w - 4} height={h - 4} rx={0.5}
             fill="#050505" stroke="#161616" strokeWidth="0.5"/>
-      {/* 3 rows × 17 pins = 51 */}
       {[0, 1, 2].map(row =>
         Array.from({ length: cols }, (_, col) => (
           <circle key={`${row}-${col}`}
@@ -161,7 +159,6 @@ function NanoConn({ px, py, w = 52 }: { px: number; py: number; w?: number }) {
   );
 }
 
-// USB-C connector — oval housing with central tab
 function UsbC({ px, py }: { px: number; py: number }) {
   const w = 18; const h = 10;
   return (
@@ -176,17 +173,13 @@ function UsbC({ px, py }: { px: number; py: number }) {
   );
 }
 
-// Micro USB connector — small trapezoid opening
 function MicroUsb({ px, py }: { px: number; py: number }) {
   return (
     <g>
-      {/* Outer housing */}
       <rect x={px} y={py} width={13} height={7} rx={1}
             fill="#080808" stroke="#222" strokeWidth="0.8"/>
-      {/* Trapezoid opening — wider at top */}
       <path d={`M${px+2},${py+1.5} L${px+11},${py+1.5} L${px+10},${py+5.5} L${px+3},${py+5.5} Z`}
             fill="#030303" stroke="#181818" strokeWidth="0.4"/>
-      {/* 5 pins inside */}
       {[0,1,2,3,4].map(i => (
         <rect key={i} x={px + 3 + i * 1.5} y={py + 2.5} width={0.8} height={3}
               fill="#1a1a1a" stroke="none"/>
@@ -195,9 +188,8 @@ function MicroUsb({ px, py }: { px: number; py: number }) {
   );
 }
 
-// ── Portrait connector variants (rotated 90° for GPP faceplate) ──────────────
+// ── Portrait connector variants ──────────────────────────────────────────────
 
-// VTRFA Airborn — portrait: 2 columns × 18 rows of pins
 function VtrfaAirbornV({ px, py }: { px: number; py: number }) {
   const w = 18; const h = 55;
   const rows   = 18;
@@ -215,14 +207,12 @@ function VtrfaAirbornV({ px, py }: { px: number; py: number }) {
           <circle cx={px + 12.5} cy={py + 5 + i * pinSpY} r={0.7} fill="#0a0a0a" stroke="#2a2a2a" strokeWidth="0.4"/>
         </g>
       ))}
-      {/* Retention screws top / bottom */}
       <circle cx={px + w / 2} cy={py + 3.5}      r={2.5} fill="#060606" stroke="#1e1e1e" strokeWidth="0.5"/>
       <circle cx={px + w / 2} cy={py + h - 3.5}  r={2.5} fill="#060606" stroke="#1e1e1e" strokeWidth="0.5"/>
     </g>
   );
 }
 
-// 51-pin Nano — portrait: 3 columns × 17 rows
 function NanoConnV({ px, py }: { px: number; py: number }) {
   const w = 14; const h = 42;
   const rows = 17;
@@ -246,7 +236,6 @@ function NanoConnV({ px, py }: { px: number; py: number }) {
   );
 }
 
-// Micro USB — portrait orientation
 function MicroUsbV({ px, py }: { px: number; py: number }) {
   return (
     <g>
@@ -262,12 +251,11 @@ function MicroUsbV({ px, py }: { px: number; py: number }) {
   );
 }
 
-// ── GPP faceplate ─────────────────────────────────────────────────────────────
+// ── GPP faceplate ────────────────────────────────────────────────────────────
 
 function GppFace({ x, side }: { x: number; side: "RED" | "BLACK" }) {
   const mid = FW / 2;
   const isRed = side === "RED";
-  // Red side gets a very subtle red-tinted panel; Black side stays dark
   const panelFill  = isRed ? "#0f0808" : "#0a0a0a";
   const panelStroke = isRed ? "#2a1010" : "#1c1c1c";
   const labelColor = isRed ? "#ef4444" : "#60a5fa";
@@ -275,49 +263,45 @@ function GppFace({ x, side }: { x: number; side: "RED" | "BLACK" }) {
 
   return (
     <g>
-      {/* Panel body — red-tinted for RED side, matte black for BLACK */}
       <rect x={x} y={FY} width={FW} height={FH} fill={panelFill} stroke={panelStroke} strokeWidth="0.8"/>
-      {/* Top edge accent line */}
       <rect x={x} y={FY} width={FW} height={2} fill={isRed ? "#7f1d1d" : "#1e2a3a"} opacity="0.7"/>
-      {/* Subtle panel screw holes at corners — matches product photo */}
       {[[x+7, FY+7],[x+FW-7, FY+7],[x+7, FY+FH-7],[x+FW-7, FY+FH-7]].map(([cx,cy],i) => (
         <circle key={i} cx={cx} cy={cy} r={3} fill="#060606" stroke={screwStroke} strokeWidth="0.6"/>
       ))}
       <Handles x={x}/>
 
       <text x={x + mid} y={FY + 36} textAnchor="middle"
-            fill="#2a2a2a" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">GPP</text>
+            fill="#6b7280" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">GPP</text>
       <text x={x + mid} y={FY + 47} textAnchor="middle"
             fill={labelColor} fontSize="9" fontFamily="monospace" fontWeight="bold" letterSpacing="2">
         {side}
       </text>
 
-      {/* ── Connectors — portrait, VTRFA+NANO side-by-side, USB below-right ── */}
       <a href="/modules/conn-vtrfa" className="conn-link">
         <VtrfaAirbornV px={x + 24} py={FY + 50}/>
-        <text x={x + 33} y={FY + 131} textAnchor="middle"
-              fill="#1a2a3a" fontSize="4.5" fontFamily="monospace">VTRFA</text>
+        <text x={x + 33} y={FY + 109} textAnchor="middle"
+              fill="#5b8fa8" fontSize="4.5" fontFamily="monospace">VTRAF</text>
       </a>
       <a href="/modules/conn-nano-51" className="conn-link">
         <NanoConnV px={x + 64} py={FY + 57}/>
-        <text x={x + 71} y={FY + 131} textAnchor="middle"
-              fill="#1a2a3a" fontSize="4.5" fontFamily="monospace">NANO</text>
+        <text x={x + 71} y={FY + 103} textAnchor="middle"
+              fill="#5b8fa8" fontSize="4.5" fontFamily="monospace">NANO</text>
       </a>
       <a href="/modules/conn-micro-usb" className="conn-link">
         <MicroUsbV px={x + 62} py={FY + 114}/>
-        <text x={x + 66} y={FY + 136} textAnchor="middle"
-              fill="#1a2a3a" fontSize="4.5" fontFamily="monospace">USB</text>
+        <text x={x + 66} y={FY + 132} textAnchor="middle"
+              fill="#5b8fa8" fontSize="4.5" fontFamily="monospace">USB</text>
       </a>
 
       <text x={x + mid} y={FY + 150} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">ARM A78AE · QUAD CORE</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">ARM A78AE · QUAD CORE</text>
       <text x={x + mid} y={FY + 160} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">16 GB LPDDR4X · ECC</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">16 GB LPDDR4X · ECC</text>
     </g>
   );
 }
 
-// ── Crypto faceplate ──────────────────────────────────────────────────────────
+// ── Crypto faceplate ─────────────────────────────────────────────────────────
 
 function CryptoFace({ x }: { x: number }) {
   const mid = FW / 2;
@@ -331,18 +315,16 @@ function CryptoFace({ x }: { x: number }) {
       <Handles x={x}/>
 
       <text x={x + mid} y={FY + 36} textAnchor="middle"
-            fill="#2a2a2a" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">CRYPTO</text>
+            fill="#6b7280" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">CRYPTO</text>
       <text x={x + mid} y={FY + 47} textAnchor="middle"
             fill="#3b82f6" fontSize="9" fontFamily="monospace" fontWeight="bold">UNIT</text>
 
-      {/* ── USB-C — centered ── */}
       <a href="/modules/conn-usb-c" className="conn-link">
         <UsbC px={x + Math.round(FW / 2) - 9} py={FY + 65}/>
         <text x={x + mid} y={FY + 82} textAnchor="middle"
-              fill="#1a2a3a" fontSize="5" fontFamily="monospace">USB-C</text>
+              fill="#5b8fa8" fontSize="5" fontFamily="monospace">USB-C</text>
       </a>
 
-      {/* FIPS badge */}
       <rect x={x + 18} y={FY + 112} width={FW - 36} height={14} rx={1.5}
             fill="#060606" stroke="#1a2e50" strokeWidth="0.7"/>
       <text x={x + mid} y={FY + 122} textAnchor="middle"
@@ -350,30 +332,27 @@ function CryptoFace({ x }: { x: number }) {
             letterSpacing="0.5">FIPS 140-2 L3</text>
 
       <text x={x + mid} y={FY + 143} textAnchor="middle"
-            fill="#1a2a3a" fontSize="5.5" fontFamily="monospace">AES-256 · ECC P-384</text>
+            fill="#5b8fa8" fontSize="5.5" fontFamily="monospace">AES-256 · ECC P-384</text>
       <text x={x + mid} y={FY + 155} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">TAMPER EVIDENT</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">TAMPER EVIDENT</text>
     </g>
   );
 }
 
-// ── PSU faceplate ─────────────────────────────────────────────────────────────
+// ── PSU faceplate ────────────────────────────────────────────────────────────
 
 function PsuFace({ x, side }: { x: number; side: "RED" | "BLACK" }) {
   const isBlack = side === "BLACK";
   const isRed = !isBlack;
   const mid = FW / 2;
 
-  // Red PSU gets warm red-tinted panel; Black PSU stays dark
   const panelFill   = isRed ? "#0f0808" : "#0a0a0a";
   const panelStroke = isRed ? "#2a1010" : "#1c1c1c";
   const labelColor  = isRed ? "#ef4444" : "#60a5fa";
-  const pinStroke   = isRed ? "#3a1010" : "#1d3a6e";
 
   return (
     <g>
       <rect x={x} y={FY} width={FW} height={FH} fill={panelFill} stroke={panelStroke} strokeWidth="0.8"/>
-      {/* Top edge accent line */}
       <rect x={x} y={FY} width={FW} height={2} fill={isRed ? "#7f1d1d" : "#1e2a3a"} opacity="0.7"/>
       {[[x+7, FY+7],[x+FW-7, FY+7],[x+7, FY+FH-7],[x+FW-7, FY+FH-7]].map(([cx,cy],i) => (
         <circle key={i} cx={cx} cy={cy} r={3} fill="#060606" stroke={panelStroke} strokeWidth="0.6"/>
@@ -381,35 +360,31 @@ function PsuFace({ x, side }: { x: number; side: "RED" | "BLACK" }) {
       <Handles x={x}/>
 
       <text x={x + mid} y={FY + 36} textAnchor="middle"
-            fill="#2a2a2a" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">POWER</text>
+            fill="#6b7280" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">POWER</text>
       <text x={x + mid} y={FY + 47} textAnchor="middle"
             fill={labelColor} fontSize="9" fontFamily="monospace" fontWeight="bold" letterSpacing="2">
         {side}
       </text>
 
-      {/* ── 15-pin MDM (top) — centered, vertical orientation ── */}
-      {/* bodyH = ceil(15/2)*5+10 = 50px */}
       <a href="/modules/conn-mdm-15" className="conn-link">
         <MdmV px={x + Math.round(mid) - 8} py={FY + 52} pins={15}/>
         <text x={x + mid} y={FY + 108} textAnchor="middle"
-              fill="#1a2a3a" fontSize="5" fontFamily="monospace">15-PIN MDM</text>
+              fill="#5b8fa8" fontSize="5" fontFamily="monospace">15-PIN MDM</text>
       </a>
 
-      {/* ── 9-pin MDM (below) — centered, vertical orientation ── */}
-      {/* bodyH = ceil(9/2)*5+10 = 35px */}
       <a href="/modules/conn-mdm-9" className="conn-link">
         <MdmV px={x + Math.round(mid) - 8} py={FY + 115} pins={9}/>
         <text x={x + mid} y={FY + 156} textAnchor="middle"
-              fill="#1a2a3a" fontSize="5" fontFamily="monospace">9-PIN MDM</text>
+              fill="#5b8fa8" fontSize="5" fontFamily="monospace">9-PIN MDM</text>
       </a>
 
       <text x={x + mid} y={FY + 166} textAnchor="middle"
-            fill="#1e1e1e" fontSize="5" fontFamily="monospace">28 VDC INPUT</text>
+            fill="#4b5563" fontSize="5" fontFamily="monospace">28 VDC INPUT</text>
     </g>
   );
 }
 
-// ── 10G Copper faceplate ──────────────────────────────────────────────────────
+// ── 10G Copper faceplate ─────────────────────────────────────────────────────
 
 function CopperFace({ x }: { x: number }) {
   const mid = FW / 2;
@@ -421,7 +396,6 @@ function CopperFace({ x }: { x: number }) {
       <rect x={px + 3} y={py + 3} width={40} height={28} rx={1} fill="#030303"/>
       <rect x={px + 10} y={py}    width={8}  height={5}  fill="#0a0a0a"/>
       <rect x={px + 28} y={py}    width={8}  height={5}  fill="#0a0a0a"/>
-      {/* blue status LEDs on port */}
       <circle cx={px + 39} cy={py + 5}  r={2.2} fill="#3b82f6" opacity="0.9"/>
       <circle cx={px + 39} cy={py + 13} r={2.2} fill="#3b82f6" opacity="0.45"/>
     </g>
@@ -436,7 +410,7 @@ function CopperFace({ x }: { x: number }) {
       <Handles x={x}/>
 
       <text x={x + mid} y={FY + 36} textAnchor="middle"
-            fill="#2a2a2a" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">10G NET</text>
+            fill="#6b7280" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">10G NET</text>
       <text x={x + mid} y={FY + 47} textAnchor="middle"
             fill="#3b82f6" fontSize="9" fontFamily="monospace" fontWeight="bold">COPPER</text>
 
@@ -448,11 +422,11 @@ function CopperFace({ x }: { x: number }) {
       </a>
 
       <text x={x + mid} y={FY + 103} textAnchor="middle"
-            fill="#1a2a3a" fontSize="6" fontFamily="monospace">10GBASE-T · DUAL</text>
+            fill="#5b8fa8" fontSize="6" fontFamily="monospace">10GBASE-T · DUAL</text>
       <text x={x + mid} y={FY + 118} textAnchor="middle"
-            fill="#1a2a3a" fontSize="6" fontFamily="monospace">CAT-6A SHIELDED</text>
+            fill="#5b8fa8" fontSize="6" fontFamily="monospace">CAT-6A SHIELDED</text>
       <text x={x + mid} y={FY + 130} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">100 m REACH</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">100 m REACH</text>
 
       <rect x={x + 20} y={FY + 140} width={FW - 40} height={12} rx={1.5}
             fill="#060606" stroke="#181818" strokeWidth="0.7"/>
@@ -460,12 +434,12 @@ function CopperFace({ x }: { x: number }) {
             fill="#3b82f6" fontSize="6" fontFamily="monospace" fontWeight="bold">pLEO CONFIG</text>
 
       <text x={x + mid} y={FY + 163} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">SWaP-C OPTIMISED</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">SWaP-C OPTIMISED</text>
     </g>
   );
 }
 
-// ── Atomic clock faceplate ────────────────────────────────────────────────────
+// ── Atomic clock faceplate ───────────────────────────────────────────────────
 
 function AtomicFace({ x }: { x: number }) {
   const mid = FW / 2;
@@ -482,11 +456,10 @@ function AtomicFace({ x }: { x: number }) {
       <Handles x={x}/>
 
       <text x={x + mid} y={FY + 36} textAnchor="middle"
-            fill="#2a2a2a" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">TIMING</text>
+            fill="#6b7280" fontSize="6.5" fontFamily="monospace" letterSpacing="1.5">TIMING</text>
       <text x={x + mid} y={FY + 47} textAnchor="middle"
             fill="#3b82f6" fontSize="9" fontFamily="monospace" fontWeight="bold">CSAC</text>
 
-      {/* Clock face — blue tinted */}
       <circle cx={clockCx} cy={clockCy} r={26} fill="none" stroke="#1d3a6e" strokeWidth="0.7" opacity="0.4"/>
       <circle cx={clockCx} cy={clockCy} r={20} fill="none" stroke="#1d4ed8" strokeWidth="0.7" opacity="0.5"/>
       {ticks.map(deg => {
@@ -506,15 +479,15 @@ function AtomicFace({ x }: { x: number }) {
       <circle cx={clockCx} cy={clockCy} r={2.5} fill="#60a5fa" opacity="0.9"/>
 
       <text x={x + mid} y={FY + 116} textAnchor="middle"
-            fill="#1a2a3a" fontSize="5.5" fontFamily="monospace">&lt; 100 ns/day</text>
+            fill="#5b8fa8" fontSize="5.5" fontFamily="monospace">&lt; 100 ns/day</text>
 
       <rect x={x + 10} y={FY + 122} width={FW - 20} height={12} rx={1.5}
             fill="#060606" stroke="#181818" strokeWidth="0.7"/>
       <text x={x + mid} y={FY + 131} textAnchor="middle"
-            fill="#1a2a3a" fontSize="6" fontFamily="monospace">1 PPS · 10 MHz REF</text>
+            fill="#5b8fa8" fontSize="6" fontFamily="monospace">1 PPS · 10 MHz REF</text>
 
       <text x={x + mid} y={FY + 145} textAnchor="middle"
-            fill="#161616" fontSize="5.5" fontFamily="monospace">IEEE 1588v2 PTP GM</text>
+            fill="#4b5563" fontSize="5.5" fontFamily="monospace">IEEE 1588v2 PTP GM</text>
       <rect x={x + 20} y={FY + 152} width={FW - 40} height={11} rx={1.5}
             fill="#060606" stroke="#181818" strokeWidth="0.6"/>
       <text x={x + mid} y={FY + 160} textAnchor="middle"
@@ -523,7 +496,7 @@ function AtomicFace({ x }: { x: number }) {
   );
 }
 
-// ── Empty slot ────────────────────────────────────────────────────────────────
+// ── Empty slot ───────────────────────────────────────────────────────────────
 
 function EmptyFace({ x }: { x: number }) {
   const mid = FW / 2;
@@ -542,21 +515,207 @@ function EmptyFace({ x }: { x: number }) {
         </g>
       )))}
       <text x={x + mid} y={FY + 84} textAnchor="middle"
-            fill="#141414" fontSize="8" fontFamily="monospace" letterSpacing="1">SPARE</text>
+            fill="#2a4060" fontSize="8" fontFamily="monospace" letterSpacing="1">SPARE</text>
       <text x={x + mid} y={FY + 98} textAnchor="middle"
-            fill="#0e0e0e" fontSize="6.5" fontFamily="monospace">SLOT</text>
+            fill="#1e3050" fontSize="6.5" fontFamily="monospace">SLOT</text>
     </g>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Slot hover zone (invisible rect that captures mouse events) ──────────────
+
+function SlotHoverZone({
+  slotIdx,
+  onEnter,
+  onLeave,
+  isHovered,
+}: {
+  slotIdx: number;
+  onEnter: (slotIdx: number) => void;
+  onLeave: () => void;
+  isHovered: boolean;
+}) {
+  const x = fx(slotIdx);
+  return (
+    <rect
+      x={x}
+      y={FY}
+      width={FW}
+      height={FH}
+      fill={isHovered ? "rgba(59, 130, 246, 0.06)" : "transparent"}
+      stroke={isHovered ? "rgba(59, 130, 246, 0.3)" : "transparent"}
+      strokeWidth="1.5"
+      rx={2}
+      style={{ cursor: "pointer", pointerEvents: "all" }}
+      onMouseEnter={() => onEnter(slotIdx)}
+      onMouseLeave={onLeave}
+    />
+  );
+}
+
+// ── Tooltip component (HTML overlay) ─────────────────────────────────────────
+
+const TYPE_LABELS: Record<string, string> = {
+  GPP_Base: "General Purpose Processor",
+  Mezzanine_XMC: "XMC Mezzanine",
+  Networking_Mezzanine: "Networking Mezzanine",
+  Crypto_Module: "Cryptographic Module",
+  Expansion_Module: "Expansion Module",
+  Power_Converter: "Power Converter",
+};
+
+const COMPATIBLE_MODULES = [
+  "Additional GPP Assembly",
+  "Timing & Networking Expansion",
+  "Custom Payload Card",
+];
+
+function ChassisTooltip({ info, svgRef }: { info: SlotTooltip & { mouseX: number; mouseY: number }; svgRef: React.RefObject<SVGSVGElement | null> }) {
+  // Position tooltip relative to the container
+  const svgRect = svgRef.current?.getBoundingClientRect();
+  if (!svgRect) return null;
+
+  // Calculate tooltip position — offset from mouse
+  const left = info.mouseX - svgRect.left;
+  const top = info.mouseY - svgRect.top;
+
+  if (info.isEmpty) {
+    return (
+      <div
+        className="absolute z-50 pointer-events-none"
+        style={{
+          left: `${left + 12}px`,
+          top: `${top - 8}px`,
+          transform: left > svgRect.width * 0.65 ? "translateX(-110%)" : undefined,
+        }}
+      >
+        <div className="rounded-lg border border-border bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[180px]">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+              Slot {info.slotNumber}
+            </span>
+            <span className="inline-block rounded bg-emerald-500/15 border border-emerald-500/25 px-1.5 py-0.5 text-[10px] text-emerald-400 font-medium">
+              Available
+            </span>
+          </div>
+          <p className="text-sm font-medium text-foreground mb-2">Spare Slot</p>
+          <p className="text-xs text-muted-foreground mb-1.5">Compatible modules:</p>
+          <div className="flex flex-wrap gap-1">
+            {COMPATIBLE_MODULES.map((mod) => (
+              <span key={mod} className="inline-block rounded border border-border bg-secondary/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {mod}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalPower = info.baseCard.powerDrawWatts + info.mezzanines.reduce((s, m) => s + m.powerDrawWatts, 0);
+  const totalWeight = info.baseCard.weightGrams + info.mezzanines.reduce((s, m) => s + m.weightGrams, 0);
+
+  return (
+    <div
+      className="absolute z-50 pointer-events-none"
+      style={{
+        left: `${left + 12}px`,
+        top: `${top - 8}px`,
+        transform: left > svgRect.width * 0.65 ? "translateX(-110%)" : undefined,
+      }}
+    >
+      <div className="rounded-lg border border-border bg-card/95 backdrop-blur-sm shadow-xl px-4 py-3 min-w-[220px] max-w-[280px]">
+        {/* Slot header */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+            Slot {info.slotNumber}
+          </span>
+          <span className="inline-block rounded bg-primary/15 border border-primary/25 px-1.5 py-0.5 text-[10px] text-primary font-medium">
+            {TYPE_LABELS[info.baseCard.type] ?? info.baseCard.type}
+          </span>
+        </div>
+
+        {/* Base card */}
+        <p className="text-sm font-medium text-foreground leading-snug">{info.baseCard.name}</p>
+
+        {/* Power / Weight row */}
+        <div className="flex gap-4 mt-1.5 mb-1">
+          <div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Power</span>
+            <p className="text-xs font-semibold text-primary font-mono">{totalPower} W</p>
+          </div>
+          <div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Weight</span>
+            <p className="text-xs font-semibold text-accent font-mono">{totalWeight} g</p>
+          </div>
+        </div>
+
+        {/* Sub-components */}
+        {info.baseCard.subComponents && info.baseCard.subComponents.length > 0 && (
+          <div className="mt-1.5">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">On-Board</p>
+            <div className="flex flex-wrap gap-1">
+              {info.baseCard.subComponents.map((sc) => (
+                <span key={sc.name} className="inline-block rounded border border-primary/20 bg-primary/5 px-1.5 py-0.5 text-[10px] text-primary/70">
+                  {sc.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mezzanines */}
+        {info.mezzanines.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
+              Attached Mezzanine{info.mezzanines.length > 1 ? "s" : ""}
+            </p>
+            {info.mezzanines.map((mez) => (
+              <div key={mez.id} className="mb-1 last:mb-0">
+                <p className="text-xs font-medium text-emerald-400">{mez.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {mez.powerDrawWatts} W · {mez.weightGrams} g
+                </p>
+                {mez.subComponents && mez.subComponents.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {mez.subComponents.map((sc) => (
+                      <span key={sc.name} className="inline-block rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 text-[10px] text-emerald-400/70">
+                        {sc.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 
 interface ChassisDiagramProps {
   slots: VPXSlot[];
 }
 
 export function ChassisDiagram({ slots }: ChassisDiagramProps) {
-  // Build a lookup from slotNumber → VPXSlot
+  const svgRef = useCallback((node: SVGSVGElement | null) => {
+    svgRefState.current = node;
+  }, []);
+  const svgRefState = { current: null as SVGSVGElement | null };
+  const svgElementRef = { current: null as SVGSVGElement | null };
+
+  // Use a proper ref
+  const [svgNode, setSvgNode] = useState<SVGSVGElement | null>(null);
+  const svgCallbackRef = useCallback((node: SVGSVGElement | null) => {
+    setSvgNode(node);
+  }, []);
+
+  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   const slotMap = new Map(slots.map((s) => [s.slotNumber, s]));
 
   function renderFace(slotIdx: number) {
@@ -574,85 +733,174 @@ export function ChassisDiagram({ slots }: ChassisDiagramProps) {
     }
   }
 
+  const handleSlotEnter = useCallback((slotIdx: number) => {
+    setHoveredSlot(slotIdx);
+  }, []);
+
+  const handleSlotLeave = useCallback(() => {
+    setHoveredSlot(null);
+  }, []);
+
+  const handleMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  // Build tooltip info
+  const tooltipInfo = hoveredSlot !== null ? (() => {
+    const slot = slotMap.get(hoveredSlot);
+    if (!slot) {
+      return { slotNumber: hoveredSlot, isEmpty: true as const, mouseX: mousePos.x, mouseY: mousePos.y };
+    }
+    return {
+      slotNumber: hoveredSlot,
+      isEmpty: false as const,
+      baseCard: slot.baseCard,
+      mezzanines: slot.attachedMezzanines,
+      mouseX: mousePos.x,
+      mouseY: mousePos.y,
+    };
+  })() : null;
+
   const labelText = `SNP-3UVPX · VITA 78 SpaceVPX · ${slots.length} / ${SLOTS} SLOTS OCCUPIED`;
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border border-border">
-      <svg
-        viewBox={`0 0 ${VW} ${VH}`}
-        className="w-full block"
-        aria-label="3U SpaceVPX chassis — front view"
-        style={{ maxHeight: "280px" }}
-      >
-          {/* ── Connector hover styles ── */}
-        <style>{`
-          .conn-link { cursor: pointer; }
-          .conn-link:hover { filter: brightness(2); }
-        `}</style>
+    <div className="relative w-full rounded-lg overflow-visible" onMouseMove={handleMouseMove}>
+      <div className="w-full rounded-lg overflow-hidden border border-border">
+        <svg
+          ref={svgCallbackRef}
+          viewBox={`0 0 ${VW} ${VH}`}
+          className="w-full block"
+          aria-label="3U SpaceVPX chassis — front view"
+          style={{ maxHeight: "280px" }}
+        >
+          {/* Connector hover styles */}
+          <style>{`
+            .conn-link { cursor: pointer; }
+            .conn-link:hover { filter: brightness(2); }
+          `}</style>
 
-        {/* ── Chassis body — matte black matching product photo ── */}
-        <rect width={VW} height={VH} rx={4} fill="#080808" stroke="#1a1a1a" strokeWidth="1.5"/>
+          {/* Chassis body */}
+          <rect width={VW} height={VH} rx={4} fill="#080808" stroke="#1a1a1a" strokeWidth="1.5"/>
 
-        {/* ── Left mounting flange — matches product photo base flanges */}
-        <rect x={0} y={0} width={EAR} height={VH} rx={3} fill="#060606" stroke="#141414" strokeWidth="1"/>
-        {[30, 80, 130, 170].map(y => (
-          <g key={y}>
-            <circle cx={14} cy={y} r={5.5} fill="#040404" stroke="#1a1a1a" strokeWidth="0.8"/>
-            <circle cx={14} cy={y} r={2.5} fill="#020202"/>
-            {/* bolt cross */}
-            <line x1={11} y1={y} x2={17} y2={y} stroke="#222" strokeWidth="0.8"/>
-            <line x1={14} y1={y-3} x2={14} y2={y+3} stroke="#222" strokeWidth="0.8"/>
-          </g>
-        ))}
+          {/* Left mounting flange */}
+          <rect x={0} y={0} width={EAR} height={VH} rx={3} fill="#060606" stroke="#141414" strokeWidth="1"/>
+          {[30, 80, 130, 170].map(y => (
+            <g key={y}>
+              <circle cx={14} cy={y} r={5.5} fill="#040404" stroke="#1a1a1a" strokeWidth="0.8"/>
+              <circle cx={14} cy={y} r={2.5} fill="#020202"/>
+              <line x1={11} y1={y} x2={17} y2={y} stroke="#222" strokeWidth="0.8"/>
+              <line x1={14} y1={y-3} x2={14} y2={y+3} stroke="#222" strokeWidth="0.8"/>
+            </g>
+          ))}
 
-        {/* ── Right mounting flange */}
-        <rect x={VW - EAR} y={0} width={EAR} height={VH} rx={3}
-              fill="#060606" stroke="#141414" strokeWidth="1"/>
-        {[30, 80, 130, 170].map(y => (
-          <g key={y}>
-            <circle cx={VW - 14} cy={y} r={5.5} fill="#040404" stroke="#1a1a1a" strokeWidth="0.8"/>
-            <circle cx={VW - 14} cy={y} r={2.5} fill="#020202"/>
-            <line x1={VW-17} y1={y} x2={VW-11} y2={y} stroke="#222" strokeWidth="0.8"/>
-            <line x1={VW-14} y1={y-3} x2={VW-14} y2={y+3} stroke="#222" strokeWidth="0.8"/>
-          </g>
-        ))}
+          {/* Right mounting flange */}
+          <rect x={VW - EAR} y={0} width={EAR} height={VH} rx={3}
+                fill="#060606" stroke="#141414" strokeWidth="1"/>
+          {[30, 80, 130, 170].map(y => (
+            <g key={y}>
+              <circle cx={VW - 14} cy={y} r={5.5} fill="#040404" stroke="#1a1a1a" strokeWidth="0.8"/>
+              <circle cx={VW - 14} cy={y} r={2.5} fill="#020202"/>
+              <line x1={VW-17} y1={y} x2={VW-11} y2={y} stroke="#222" strokeWidth="0.8"/>
+              <line x1={VW-14} y1={y-3} x2={VW-14} y2={y+3} stroke="#222" strokeWidth="0.8"/>
+            </g>
+          ))}
 
-        {/* ── Top rail */}
-        <rect x={EAR} y={0} width={VW - EAR * 2} height={RAIL}
-              fill="#070707" stroke="#141414" strokeWidth="0.8"/>
-        {Array.from({ length: SLOTS - 1 }, (_, i) => (
-          <line key={i}
-                x1={EAR + (i + 1) * SW} y1={0}
-                x2={EAR + (i + 1) * SW} y2={RAIL}
-                stroke="#111" strokeWidth="1"/>
-        ))}
-        {/* Chassis label */}
-        <text x={EAR + 8} y={14} fill="#1e1e1e" fontSize="7" fontFamily="monospace"
-              letterSpacing="1" fontWeight="bold">
-          {labelText}
-        </text>
+          {/* Top rail */}
+          <rect x={EAR} y={0} width={VW - EAR * 2} height={RAIL}
+                fill="#070707" stroke="#141414" strokeWidth="0.8"/>
+          {Array.from({ length: SLOTS - 1 }, (_, i) => (
+            <line key={i}
+                  x1={EAR + (i + 1) * SW} y1={0}
+                  x2={EAR + (i + 1) * SW} y2={RAIL}
+                  stroke="#111" strokeWidth="1"/>
+          ))}
+          <text x={EAR + 8} y={14} fill="#4b5563" fontSize="7" fontFamily="monospace"
+                letterSpacing="1" fontWeight="bold">
+            {labelText}
+          </text>
 
-        {/* ── Bottom rail */}
-        <rect x={EAR} y={VH - RAIL} width={VW - EAR * 2} height={RAIL}
-              fill="#070707" stroke="#141414" strokeWidth="0.8"/>
-        {Array.from({ length: SLOTS - 1 }, (_, i) => (
-          <line key={i}
-                x1={EAR + (i + 1) * SW} y1={VH - RAIL}
-                x2={EAR + (i + 1) * SW} y2={VH}
-                stroke="#111" strokeWidth="1"/>
-        ))}
+          {/* Bottom rail */}
+          <rect x={EAR} y={VH - RAIL} width={VW - EAR * 2} height={RAIL}
+                fill="#070707" stroke="#141414" strokeWidth="0.8"/>
+          {Array.from({ length: SLOTS - 1 }, (_, i) => (
+            <line key={i}
+                  x1={EAR + (i + 1) * SW} y1={VH - RAIL}
+                  x2={EAR + (i + 1) * SW} y2={VH}
+                  stroke="#111" strokeWidth="1"/>
+          ))}
 
-        {/* ── Slot separators ───────────────────────────────────── */}
-        {Array.from({ length: SLOTS - 1 }, (_, i) => (
-          <line key={i}
-                x1={EAR + (i + 1) * SW - 1} y1={RAIL}
-                x2={EAR + (i + 1) * SW - 1} y2={VH - RAIL}
-                stroke="#0d1e34" strokeWidth="1.5"/>
-        ))}
+          {/* Slot separators */}
+          {Array.from({ length: SLOTS - 1 }, (_, i) => (
+            <line key={i}
+                  x1={EAR + (i + 1) * SW - 1} y1={RAIL}
+                  x2={EAR + (i + 1) * SW - 1} y2={VH - RAIL}
+                  stroke="#0d1e34" strokeWidth="1.5"/>
+          ))}
 
-        {/* ── Module faces ──────────────────────────────────────── */}
-        {Array.from({ length: SLOTS }, (_, i) => renderFace(i))}
-      </svg>
+          {/* Module faces */}
+          {Array.from({ length: SLOTS }, (_, i) => renderFace(i + 1))}
+
+          {/* Invisible hover zones on top of everything */}
+          {Array.from({ length: SLOTS }, (_, i) => (
+            <SlotHoverZone
+              key={`hover-${i + 1}`}
+              slotIdx={i + 1}
+              onEnter={handleSlotEnter}
+              onLeave={handleSlotLeave}
+              isHovered={hoveredSlot === i + 1}
+            />
+          ))}
+        </svg>
+      </div>
+
+      {/* Tooltip overlay */}
+      {tooltipInfo && svgNode && (
+        <ChassisTooltip
+          info={tooltipInfo}
+          svgRef={{ current: svgNode }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Build Switcher wrapper ───────────────────────────────────────────────────
+
+interface BuildSwitcherProps {
+  builds: { id: string; customerName: string; slots: VPXSlot[] }[];
+  currentBuildId: string;
+}
+
+export function ChassisDiagramWithSwitcher({ builds, currentBuildId }: BuildSwitcherProps) {
+  const [activeBuildId, setActiveBuildId] = useState(currentBuildId);
+  const activeBuild = builds.find((b) => b.id === activeBuildId) ?? builds[0];
+
+  return (
+    <div>
+      {/* Build switcher bar */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+          Viewing:
+        </span>
+        <div className="flex gap-1 flex-wrap">
+          {builds.map((build) => (
+            <button
+              key={build.id}
+              type="button"
+              onClick={() => setActiveBuildId(build.id)}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                activeBuildId === build.id
+                  ? "bg-primary/15 text-primary border border-primary/30 shadow-sm"
+                  : "text-muted-foreground border border-transparent hover:bg-secondary hover:text-foreground hover:border-border"
+              }`}
+            >
+              {build.customerName}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <ChassisDiagram slots={activeBuild.slots} />
     </div>
   );
 }

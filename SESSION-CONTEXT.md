@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-06 (Session 3)_
+_Last updated: 2026-03-07 (Session 4)_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -103,7 +103,7 @@ interface HardwareComponent {
 ### VPXSlot
 ```typescript
 interface VPXSlot {
-  slotNumber: number;               // 0-based, maps to physical chassis position
+  slotNumber: number;               // 1-based (1–7), maps to physical chassis position
   baseCard: HardwareComponent;
   attachedMezzanines: HardwareComponent[];
 }
@@ -156,15 +156,15 @@ interface SystemBuild {
 
 ### Customer Builds
 
-#### Standard Chassis Layout (VITA 78 SpaceVPX, 7 slots, 0-indexed)
+#### Standard Chassis Layout (VITA 78 SpaceVPX, 7 slots, 1-indexed)
 ```
-Slot 0: PSU Red
-Slot 1: Spare (or Expansion Module)
-Slot 2: Spare
-Slot 3: GPP Red
-Slot 4: Crypto Module
-Slot 5: GPP Black
-Slot 6: PSU Black
+Slot 1: PSU Red
+Slot 2: Spare (or Expansion Module)
+Slot 3: Spare (or Expansion Module — J2 uses this for Atomic Clock)
+Slot 4: GPP Red
+Slot 5: Crypto Module
+Slot 6: GPP Black
+Slot 7: PSU Black
 ```
 
 #### Builds
@@ -172,7 +172,7 @@ Slot 6: PSU Black
 | Build ID | customerName | Description | Total Power | Slot 1 | Crypto |
 |---|---|---|---|---|---|
 | `baseline` | Baseline | Dual optical mezzanine — reference config | 96 W | empty | MARCC |
-| `customer-a-pleo` | ABE | pLEO — 2× ACAM (cold spare), Red: VTRFA, Black: 3× QSFP | 90 W | empty | 2× ACAM |
+| `customer-a-pleo` | ABE | pLEO — 2× ACAM (cold spare), Red: VTRAF, Black: 3× QSFP | 90 W | empty | 2× ACAM |
 | `customer-b-pleo` | J2 | pLEO — copper mezzanines + Atomic Clock | 103 W | timing-atomic-clock | — |
 | `customer-c-pleo` | JL | pLEO — copper mezzanines both GPPs | 90 W | empty | — |
 | `fms-irad` | FMS | IRAD lab prototype — ACAM crypto, MDM connector for 1000Base-T | 96 W | empty | ACAM |
@@ -183,9 +183,9 @@ Slot 6: PSU Black
 - ABE → **2× ACAM** (one cold spare)
 
 **Connector callouts:**
-- Baseline GPP Red & Black: VTRFA (optical), Nano-D (4× 1000Base-T), USB
+- Baseline GPP Red & Black: VTRAF (optical), Nano-D (4× 1000Base-T), USB
 - FMS GPP Red & Black: Optical 10G mezzanine, MDM connector (4× 1000Base-T)
-- ABE GPP Red: VTRFA · Nano-D · USB; GPP Black: 3× QSFP · Nano-D · USB
+- ABE GPP Red: VTRAF · Nano-D · USB; GPP Black: 3× QSFP · Nano-D · USB
 
 **Power math (baseline / FMS):** PSU Red (5) + GPP Red (32) + Optical (6) + Crypto (10) + GPP Black (31) + Optical (6) + PSU Black (6) = **96 W**
 **Power math (J2):** PSU Red (5) + Atomic Clock (13) + GPP Red (32) + Copper (3) + Crypto (10) + GPP Black (31) + Copper (3) + PSU Black (6) = **103 W**
@@ -303,9 +303,19 @@ SVG-based front-panel diagram rendered as a React server component. Each VPX slo
 **Clickable connectors:** All connectors are wrapped in SVG `<a href="/modules/conn-[id]">` anchors. Hover uses `.conn-link:hover { filter: brightness(2); }` defined in a `<style>` block inside the SVG.
 
 **GPP front panel connector positions (x = slot x-offset, FY = front panel y-offset):**
-- VTRFA: `px={x+24} py={FY+50}`, label at `y={FY+131}`
-- NANO: `px={x+64} py={FY+57}`, label at `y={FY+131}`
-- USB: `px={x+62} py={FY+114}`, label at `y={FY+136}`
+- VTRAF: `px={x+24} py={FY+50}` (h=55, bottom at FY+105), label at `y={FY+109}`, fill `#5b8fa8`
+- NANO: `px={x+64} py={FY+57}` (h=42, bottom at FY+99), label at `y={FY+103}`, fill `#5b8fa8`
+- USB: `px={x+62} py={FY+114}` (h=14, bottom at FY+128), label at `y={FY+132}`, fill `#5b8fa8`
+
+**Slot indexing:** `fx(slot) = EAR + (slot-1) * SW`. Render loop: `Array.from({ length: SLOTS }, (_, i) => renderFace(i + 1))`.
+
+**Text color conventions (all text must be readable on `#080808` background):**
+- Section type labels (GPP, POWER, CRYPTO, etc.): `fill="#6b7280"`
+- Connector labels (VTRAF, NANO, USB-C, MDM, etc.): `fill="#5b8fa8"`
+- Spec detail text (ARM A78AE, 28 VDC INPUT, etc.): `fill="#4b5563"`
+- Empty slot "SPARE": `fill="#2a4060"`, "SLOT": `fill="#1e3050"`
+- Chassis top-rail label: `fill="#4b5563"`
+- Active colored labels (RED, BLACK, UNIT, CSAC, COPPER, pLEO CONFIG, PRECISION SYNC, FIPS 140-2 L3): keep as-is (`#ef4444`, `#60a5fa`, `#3b82f6`)
 
 **Atomic Clock front panel:** Shows "PRECISION SYNC" label (not "GEO MISSION")
 
@@ -315,7 +325,7 @@ SVG-based front-panel diagram rendered as a React server component. Each VPX slo
 
 SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SVG scales to fill container width with `style={{ width: '100%', minWidth: '720px' }}` inside an `overflow-x-auto` wrapper.
 
-**Layout (viewBox="0 0 720 408"):**
+**Layout (viewBox="0 0 720 455"):**
 - **Main horizontal spine (left → right):** FMS → Baseline → Next Gen
   - FMS → Baseline: solid blue arrow labeled "all updates"
   - Baseline → Next Gen: dashed arrow (future/roadmap)
@@ -328,8 +338,9 @@ SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SV
 - FMS: `{ x:33, y:40, w:175, h:155, cx:121 }`
 - Baseline: `{ x:258, y:18, w:225, h:158, cx:370 }`
 - Next Gen: `{ x:533, y:40, w:155, h:70, cx:611 }`
-- forkY: 245, custY: 265, custW: 130, custH: 110
+- forkY: 245, custY: 265, custW: 130, custH: 110, **j2H: 155** (J2 box taller than ABE/JL)
 - ABE: `{ x:126, cx:191 }` · J2: `{ x:305, cx:370 }` · JL: `{ x:484, cx:549 }`
+- "CUSTOMER VARIANTS" label at `y={custY + j2H + 12}` (clears the tallest box)
 
 **Per-card (Red/Black) callout convention:**
 - All spec lines split into "Red: ..." (fill `hsl(2 60% 55%)`) and "Black: ..." (fill `hsl(215 10% 48%)`)
@@ -340,16 +351,16 @@ SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SV
 
 **Node content summary:**
 - FMS: amber glow, IRAD badge — 16 GB DDR4 · 2 Gb NVM · FPGA 1.5M SLC (shared), Red/Black Optical 10G each with MDM · 4× 1000Base-T sub-line, ACAM Crypto, HW & FW validation
-- Baseline: mission blue glow, PRODUCTION badge — Red/Black: 16 GB DDR4 · 1.2 TB NVMe · Optical 10G + VTRFA · Nano-D (4× 1000Base-T) · USB, 7-slot SpaceVPX · MARCC Crypto, 96 W
+- Baseline: mission blue glow, PRODUCTION badge — Red/Black: 16 GB DDR4 · 1.2 TB NVMe · Optical 10G + VTRAF · Nano-D (4× 1000Base-T) · USB, 7-slot SpaceVPX · MARCC Crypto, 96 W
 - Next Gen: ghost/dashed border, roadmap placeholder
-- ABE: pLEO · 2× ACAM (Cold Spare), Red: 16 GB DDR4 · Copper 10G + VTRFA · Nano-D · USB, Black: 16 GB DDR4 · Copper 10G + 3× QSFP · Nano-D · USB, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
-- J2: pLEO · Atomic Clock, Red/Black Copper 10G + VTRFA · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 103 W
-- JL: pLEO Mission, Red/Black Copper 10G + VTRFA · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
+- ABE: pLEO · 2× ACAM (Cold Spare), Red: 16 GB DDR4 · Copper 10G + VTRAF · Nano-D · USB, Black: 16 GB DDR4 · Copper 10G + 3× QSFP · Nano-D · USB, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
+- J2: pLEO · Atomic Clock, Red: **Optical** 10G + VTRAF · Nano-D · USB · RS-422 In/Out · 1PPS LVDS, Black: Copper 10G + VTRAF · Nano-D · USB · 4× 1PPS · 4× 10MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c), 103 W
+- JL: pLEO Mission, Red/Black Copper 10G + VTRAF · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
 
 **J2 node** has its own height constant `j2H = 155` (vs `custH = 110` for ABE/JL) due to extra interface callouts. The `j2.cy` uses `j2H`. The CUSTOMER VARIANTS label uses `j2H`. viewBox height is `455`.
 
-**J2 Red interfaces:** VTRFA · Nano-D · USB · 1× RS-422 In · 1× RS-422 Out · 1× 1PPS (LVDS) In · 2 Gb NVM · FPGA 1.5M SLC
-**J2 Black interfaces:** VTRFA · Nano-D · USB · 4× 1PPS · 4× 10 MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c reqd, Quad PHY per Baseline) · 2 Gb NVM · FPGA 1.5M SLC
+**J2 Red interfaces:** VTRAF · Nano-D · USB · 1× RS-422 In · 1× RS-422 Out · 1× 1PPS (LVDS) In · 2 Gb NVM · FPGA 1.5M SLC
+**J2 Black interfaces:** VTRAF · Nano-D · USB · 4× 1PPS · 4× 10 MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c reqd, Quad PHY per Baseline) · 2 Gb NVM · FPGA 1.5M SLC
 
 **NVM/SLC callout convention (Session 3):** Each customer variant node now shows `2 Gb NVM · FPGA 1.5M SLC` as a sub-line under **both** the Red section and the Black section separately (not a shared R+B line).
 
@@ -451,13 +462,33 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 ## 14. Git Commit History
 
 ```
-(this session)   Update session context
-beb86e2          Update session context
+(this session)   Update session context (Session 4)
+beb86e2          Update session context (Session 3)
 6357cf0          Add FMS IRAD build and product lineage diagram
 15b398e          Update session context + fix pdf-parse production dependency
 8987e2f          Add SESSION-CONTEXT.md for future agent onboarding
 53625d5          Add AI knowledge base integration, GEO removal, new mezzanine, and document store
 ```
+
+### Session 4 changes summary
+- Chassis diagram: all dark text fills brightened to readable colors (#6b7280, #5b8fa8, #4b5563)
+- Chassis diagram: connector label y-positions fixed to sit just below each connector
+- Slot numbering changed from 0–6 to 1–7 throughout (mock-hardware.ts, chassis-diagram.tsx)
+- J2 CSAC moved to slot 3 (adjacent to GPP Red at slot 4)
+- Dynamic slot layout text below chassis diagram (replaces hardcoded string)
+- VTRAF renamed from VTRFA everywhere (all source files)
+- Dual-channel → quad-channel everywhere except ABE Black (3× QSFP, 3 of 4 lanes)
+- "Not Included vs Baseline" text: improved contrast (text-foreground/60 + line-through)
+- J2 product lineage: Red switched to Optical 10G (was Copper), added RS-422/1PPS interfaces
+- J2 product lineage: Black added 4× 1PPS · 4× 10MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T
+- ABE Black connector line: "3× QSFP · 2× 100Base-T · USB"
+- NVM/SLC split into per-Red and per-Black sub-lines in each customer variant node
+- Added 10G QSFP Passive XMC mezzanine (mock-components.ts, overview page)
+- Added customer-module-overrides.ts with per-customer interface usage annotations
+- Added /builds/[customerId]/modules/[componentId] customer-context module page
+- Mezzanine links in build detail page route to customer-specific module pages
+- Power callout added to FMS lineage box; J2 103 W text moved down to avoid overlap
+- 4× 1000Base-T via Nano-D added to all mezzanine cards and module pages
 
 ---
 
@@ -471,6 +502,8 @@ beb86e2          Update session context
 - **Next Gen node** — Currently a ghost placeholder. As requirements are defined, this should become a real build entry with its own ID and configuration.
 - **CSAC Precision Timing Module** — Static card on overview page only; no detail page (`/modules/[id]`) or hardware catalog entry yet.
 - **mock-hardware.ts memory** — SESSION-CONTEXT says 2 Gb MRAM but code may still reference "NVM Flash". Verify and update `mock-hardware.ts` / `mock-components.ts` to use MRAM terminology.
+- **CopperFace chassis SVG** — still shows "10GBASE-T · DUAL" label; should say QUAD to match naming convention change.
+- **QSFP passive** — `mez-qsfp-passive` has no hardware catalog entry in mock-hardware.ts (only in mock-components.ts); no build uses it yet.
 
 ---
 

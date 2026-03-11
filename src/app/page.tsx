@@ -245,7 +245,7 @@ export default function OverviewPage() {
                   </Badge>
                 </div>
                 <CardDescription className="text-xs leading-relaxed">
-                  4× 10G optical channels (50 Gbps aggregate) via AirBorn FOCuS VTRFA connector.
+                  4× 10G optical channels (50 Gbps aggregate) via AirBorn FOCuS VTRAF connector.
                   Radiation-hardened, sealed optical path. Standard for all baseline builds.
                 </CardDescription>
               </CardHeader>

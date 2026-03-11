@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BUILDS, getBuildById, getBuildDifferences, flattenComponents } from "@/lib/mock-hardware";
 import type { ComponentType, HardwareComponent } from "@/lib/mock-hardware";
-import { ChassisDiagram } from "@/components/chassis-diagram";
+import { ChassisDiagramWithSwitcher } from "@/components/chassis-diagram";
 
 export function generateStaticParams() {
   return BUILDS.map((b) => ({ customerId: b.id }));
@@ -43,7 +43,15 @@ export default async function BuildDetailPage({
   if (!build) notFound();
 
   const isBaseline = build.id === "baseline";
+  const isIrad = build.id === "fms-irad";
   const diff = isBaseline ? null : getBuildDifferences("baseline", build.id);
+
+  // Prepare builds data for the switcher (serializable props only)
+  const buildsForSwitcher = BUILDS.map((b) => ({
+    id: b.id,
+    customerName: b.customerName,
+    slots: b.slots,
+  }));
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -51,7 +59,7 @@ export default async function BuildDetailPage({
       {/* ── Back nav ─────────────────────────────────────────────── */}
       <div className="mb-2">
         <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
-          <Link href="/builds">← Back to Comparisons</Link>
+          <Link href="/builds">&larr; Back to Comparisons</Link>
         </Button>
       </div>
 
@@ -64,6 +72,8 @@ export default async function BuildDetailPage({
             </h1>
             {isBaseline ? (
               <Badge className="bg-primary/20 text-primary border-primary/30">Baseline</Badge>
+            ) : isIrad ? (
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">IRAD &middot; Lab</Badge>
             ) : (
               <Badge variant="secondary">
                 pLEO
@@ -78,7 +88,7 @@ export default async function BuildDetailPage({
           <div className="flex gap-6 rounded-lg border border-border bg-card px-5 py-4 shrink-0">
             <div className="text-right">
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                Power Δ
+                Power &Delta;
               </p>
               <p
                 className={`font-heading text-2xl font-bold ${
@@ -90,7 +100,7 @@ export default async function BuildDetailPage({
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                Weight Δ
+                Weight &Delta;
               </p>
               <p
                 className={`font-heading text-2xl font-bold ${
@@ -104,14 +114,20 @@ export default async function BuildDetailPage({
         )}
       </div>
 
-      {/* ── Chassis diagram ──────────────────────────────────────── */}
+      {/* ── Chassis diagram with build switcher ────────────────────── */}
       <div className="mb-10">
         <h2 className="font-heading text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-          Front Panel — 3U SpaceVPX Chassis
+          Front Panel &mdash; 3U SpaceVPX Chassis
         </h2>
-        <ChassisDiagram slots={build.slots}/>
+        <ChassisDiagramWithSwitcher
+          builds={buildsForSwitcher}
+          currentBuildId={customerId}
+        />
         <p className="text-xs text-muted-foreground mt-2">
-          Slot layout: GPP Red · GPP Black · Crypto Unit · PSU Red · PSU Black · Expansion · Spare
+          {Array.from({ length: 7 }, (_, i) => {
+            const s = build.slots.find((sl) => sl.slotNumber === i + 1);
+            return `S${i + 1}: ${s ? s.baseCard.name.replace(" (Red)", " R").replace(" (Black)", " B") : "Spare"}`;
+          }).join(" \u00B7 ")}
         </p>
       </div>
 
@@ -196,7 +212,7 @@ export default async function BuildDetailPage({
                           <p className="text-sm font-medium text-foreground group-hover/link:text-primary transition-colors leading-snug">
                             {comp.name}
                           </p>
-                          <span className="text-xs text-muted-foreground group-hover/link:text-primary transition-colors shrink-0">→</span>
+                          <span className="text-xs text-muted-foreground group-hover/link:text-primary transition-colors shrink-0">&rarr;</span>
                         </Link>
                       ) : (
                         <p className="text-sm font-medium text-foreground leading-snug">{comp.name}</p>
@@ -213,7 +229,7 @@ export default async function BuildDetailPage({
                     )}
 
                     <p className="text-xs text-muted-foreground mt-1">
-                      {comp.powerDrawWatts} W · {comp.weightGrams} g
+                      {comp.powerDrawWatts} W &middot; {comp.weightGrams} g
                     </p>
 
                     {comp.subComponents && comp.subComponents.length > 0 && (
@@ -254,10 +270,10 @@ export default async function BuildDetailPage({
             {diff.removedComponents.map((comp, i) => (
               <div
                 key={`${comp.id}-${i}`}
-                className="rounded-md border border-dashed border-muted/50 bg-secondary/10 p-3 opacity-50"
+                className="rounded-md border border-dashed border-muted/40 bg-secondary/10 p-3"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-muted-foreground leading-snug line-through">
+                  <p className="text-sm font-medium text-foreground/60 leading-snug line-through decoration-foreground/40">
                     {comp.name}
                   </p>
                   <Badge variant="outline" className="text-xs shrink-0 text-muted-foreground border-muted">
@@ -268,7 +284,7 @@ export default async function BuildDetailPage({
                   Replaced in this build
                 </Badge>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  {comp.powerDrawWatts} W · {comp.weightGrams} g
+                  {comp.powerDrawWatts} W &middot; {comp.weightGrams} g
                 </p>
               </div>
             ))}
