@@ -10,7 +10,9 @@ const navLinks = [
   { href: "/swap", label: "SWaP-C" },
   { href: "/changes", label: "Changes" },
   { href: "/firmware", label: "Firmware" },
+  { href: "/interfaces", label: "Interfaces" },
   { href: "/verification", label: "Verification" },
+  { href: "/integration", label: "Integration" },
   { href: "/qualification", label: "Qualification" },
   { href: "/knowledge-base", label: "Knowledge Base" },
 ];
