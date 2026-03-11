@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/", label: "Overview" },
   { href: "/builds", label: "Builds" },
   { href: "/parts", label: "Parts" },
+  { href: "/swap", label: "SWaP-C" },
   { href: "/qualification", label: "Qualification" },
   { href: "/knowledge-base", label: "Knowledge Base" },
 ];
