@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-11 (Session 5 — final)_
+_Last updated: 2026-03-11 (Session 6)_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -17,6 +17,8 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 - **Git identity:** `jnethercutt34 <jnethercutt34@gmail.com>`
 - **Run dev:** `npm run dev`
 - **Type check:** `npx tsc --noEmit`
+- **Run tests:** `npm test` (95 tests, Vitest 4.x)
+- **Watch tests:** `npm run test:watch`
 - **Network access:** Dev server binds to `0.0.0.0` by default — coworkers on the same LAN can access via the Network URL shown at startup (e.g. `http://192.168.0.118:3000`). Windows Firewall must allow inbound TCP on port 3000.
 - **Desktop shortcut:** `C:\Users\jneth\Desktop\SNP-Onboard.lnk` → runs `C:\AI-Tools\SNP-Onboard\launch.bat` which starts the dev server and opens `http://localhost:3000`. Icon: `public/app-icon.ico` (dark navy chip with "SNP" in blue).
 
@@ -106,6 +108,14 @@ src/
     mock-ai.ts                        Mock AI responses + AiResponse interface
     document-store.ts                 Server-side document ingestion for knowledge base
     utils.ts                          cn() utility
+    __tests__/
+      mock-hardware.test.ts           12 tests — builds, utilities
+      mock-parts.test.ts              19 tests — BOM catalog, trade studies, utilities
+      mock-qualification.test.ts      11 tests — qualification data, mission environments
+      mock-changes.test.ts            12 tests — change records, filtering, name helpers
+      mock-firmware.test.ts           13 tests — releases, version matrix
+      mock-verification.test.ts       13 tests — requirements, categories, summaries
+      mock-interfaces.test.ts         15 tests — signal paths, backplane, filtering
 public/
   app-icon.ico                        Desktop shortcut icon (dark navy chip, "SNP" in blue)
   datasheets/                         Real PDF datasheets served at /datasheets/*
@@ -551,13 +561,14 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 `next@16.1.6`, `react@19.2.3`, `react-dom@19.2.3`, `openai@^6.25.0`, `mammoth@^1.11.0`, `xlsx@^0.18.5`, `pdf-parse@^2.4.5`, `lucide-react`, `radix-ui`, `clsx`, `tailwind-merge`, `class-variance-authority`
 
 ### Dev
-`typescript`, `tailwindcss@^4`, `@tailwindcss/postcss`, `eslint`, `eslint-config-next`, `shadcn`, `tw-animate-css`, `@types/node`, `@types/react`, `@types/react-dom`
+`typescript`, `tailwindcss@^4`, `@tailwindcss/postcss`, `eslint`, `eslint-config-next`, `shadcn`, `tw-animate-css`, `@types/node`, `@types/react`, `@types/react-dom`, `vitest@^4.0.18`, `@vitejs/plugin-react@^5.1.4`
 
 ---
 
 ## 15. Git Commit History
 
 ```
+3f6cf20  Add Vitest test suite — 95 tests across 7 data modules (Session 6)
 ae1a0d1  Add Interface Signal Map and Assembly Integration Guide (Session 5)
 b6ef551  Add Verification & Test Status — 21 requirements across 6 categories (Session 5)
 1b16f96  Add Firmware & Software module — version matrix, 11 releases (Session 5)
@@ -614,6 +625,20 @@ ba1580c  Initial commit — SNP Product HUB (Phases 1–4)
 **Infrastructure:**
 - Navbar expanded to 10+ links with improved active state detection
 - All new modules follow existing conventions: shadcn/ui cards, color-coded badges, breadcrumb navigation
+
+**Test Suite (Session 6):**
+- **Vitest 4.x** with `globals: true` — do NOT import `describe`/`it`/`expect` from `"vitest"` (Vitest 4.x globals mode: explicit imports shadow the globals and silently produce 0 tests)
+- `vitest.config.ts` with `@/` → `./src/` path alias
+- `package.json` scripts: `"test": "vitest run"`, `"test:watch": "vitest"`
+- **7 test files** in `src/lib/__tests__/`:
+  - `mock-hardware.test.ts` (12 tests) — BUILDS, getBuildById, flattenComponents, getBuildDifferences
+  - `mock-parts.test.ts` (19 tests) — PARTS_CATALOG, TRADE_STUDIES, all 9 utility functions, getBOMSummary
+  - `mock-qualification.test.ts` (11 tests) — MODULE_QUALIFICATIONS, MISSION_ENVIRONMENTS, status counts
+  - `mock-changes.test.ts` (12 tests) — CHANGE_RECORDS, filtering by module/build/status, name helpers
+  - `mock-firmware.test.ts` (13 tests) — FIRMWARE_RELEASES, VERSION_MATRIX, release queries
+  - `mock-verification.test.ts` (13 tests) — REQUIREMENTS, categories, summaries
+  - `mock-interfaces.test.ts` (15 tests) — SIGNAL_PATHS, BACKPLANE_INFO, domain/slot/module/build filtering
+- **95 tests total, all passing**
 
 ---
 
