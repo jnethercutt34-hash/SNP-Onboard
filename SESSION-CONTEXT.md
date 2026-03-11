@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-11 (Session 5)_
+_Last updated: 2026-03-11 (Session 5 — final)_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -36,6 +36,16 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 | `/parts/trade-studies` | `src/app/parts/trade-studies/page.tsx` | **Trade studies index** — all engineering analyses with summaries, conclusions, affected parts |
 | `/parts/trade-studies/[studyId]` | `src/app/parts/trade-studies/[studyId]/page.tsx` | **Trade study detail** — full summary, conclusion card, cross-linked affected parts |
 | `/parts/import` | `src/app/parts/import/page.tsx` | **BOM import** — CSV upload with preview table, expected column format reference, Excel guidance |
+| `/swap` | `src/app/swap/page.tsx` | **SWaP-C Dashboard** — power/weight budgets, slot-level stacked bars, cross-build comparison |
+| `/qualification` | `src/app/qualification/page.tsx` | **Qualification & Environment** — mission environments, per-module rad/thermal/test matrix |
+| `/qualification/[moduleId]` | `src/app/qualification/[moduleId]/page.tsx` | Module qualification detail — radiation profile, thermal profile, test list |
+| `/changes` | `src/app/changes/page.tsx` | **Configuration Changes** — ECO/ECN/DCN log with status/type/severity filters |
+| `/changes/[changeId]` | `src/app/changes/[changeId]/page.tsx` | Change detail — timeline, description, rationale, impact, document refs |
+| `/firmware` | `src/app/firmware/page.tsx` | **Firmware & Software** — per-build version matrix, release history by target |
+| `/firmware/[releaseId]` | `src/app/firmware/[releaseId]/page.tsx` | Release detail — changelog, HW/build compatibility, update procedure |
+| `/interfaces` | `src/app/interfaces/page.tsx` | **Interface Signal Map** — backplane architecture, signal paths, domain/build filters |
+| `/verification` | `src/app/verification/page.tsx` | **Verification & Test** — requirements matrix, per-category progress, traceability |
+| `/integration` | `src/app/integration/page.tsx` | **Assembly & Integration Guide** — 30-step procedure, GSE list, critical checkpoints |
 | `/knowledge-base` | `src/app/knowledge-base/page.tsx` | AI Q&A — client component, calls POST /api/chat |
 | `/api/chat` | `src/app/api/chat/route.ts` | AI backend handler |
 
@@ -62,6 +72,19 @@ src/
         page.tsx                      Trade studies index
         [studyId]/page.tsx            Trade study detail (SSG)
       import/page.tsx                 BOM import page (client component)
+    swap/page.tsx                     SWaP-C dashboard (client component)
+    qualification/
+      page.tsx                        Qualification matrix overview
+      [moduleId]/page.tsx             Module qualification detail (SSG)
+    changes/
+      page.tsx                        Configuration change log (client component)
+      [changeId]/page.tsx             Change detail (SSG)
+    firmware/
+      page.tsx                        Firmware version matrix + release history
+      [releaseId]/page.tsx            Release detail (SSG)
+    interfaces/page.tsx               Interface signal map (client component)
+    verification/page.tsx             Verification & test matrix
+    integration/page.tsx              Assembly & integration guide
     knowledge-base/page.tsx           AI knowledge base (client component)
     api/chat/route.ts                 AI provider routing (mock | internal | gemini)
   components/
@@ -75,6 +98,11 @@ src/
     mock-components.ts                Component detail page data (specs, datasheets, related)
     customer-module-overrides.ts      Per-customer interface usage annotations (active/partial/unused)
     mock-parts.ts                     Parts & Materials data model, BOM catalog, trade studies, utilities
+    mock-qualification.ts              Qualification data — radiation, thermal, test matrices per module
+    mock-changes.ts                   Configuration change records (ECO/ECN/DCN)
+    mock-firmware.ts                  Firmware releases, version matrix, compatibility
+    mock-interfaces.ts                Signal paths, backplane architecture, domain mapping
+    mock-verification.ts              Requirements, verification status, traceability
     mock-ai.ts                        Mock AI responses + AiResponse interface
     document-store.ts                 Server-side document ingestion for knowledge base
     utils.ts                          cn() utility
@@ -508,7 +536,7 @@ All 4 mezzanine cards have: **4× 10/100/1000Base-T via 51-pin Nano-D connector 
 All non-baseline, non-IRAD builds use `customer-[letter]-pleo` IDs. The badge shows `"pLEO"` for these. FMS uses `fms-irad` and gets an amber IRAD badge.
 
 ### Navbar
-Four links: Overview · Builds · Parts · Knowledge Base. Active state uses `pathname.startsWith(href)` for sub-page highlighting (except `/` which uses exact match).
+10 links: Overview · Builds · Parts · SWaP-C · Changes · Firmware · Interfaces · Qualification · Verification · Integration · Knowledge Base. Active state uses `pathname.startsWith(href)` for sub-page highlighting (except `/` which uses exact match). May need responsive/hamburger menu treatment for smaller screens.
 
 ### next.config.ts serverExternalPackages
 ```typescript
@@ -530,6 +558,13 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 ## 15. Git Commit History
 
 ```
+ae1a0d1  Add Interface Signal Map and Assembly Integration Guide (Session 5)
+b6ef551  Add Verification & Test Status — 21 requirements across 6 categories (Session 5)
+1b16f96  Add Firmware & Software module — version matrix, 11 releases (Session 5)
+4b57e12  Add Configuration Change Tracker — 8 ECO/ECN/DCN records (Session 5)
+b717a26  Add SWaP-C Dashboard — power/weight budgets, slot breakdown (Session 5)
+4d8a6b3  Add Qualification & Environment module — radiation, thermal, test matrix (Session 5)
+9ae01f9  Update session context (Session 5)
 7e98c74  Add Parts & Materials section with BOM catalog, trade studies, and import scaffold (Session 5)
 d313c8d  Session 4: 1-indexed slots, chassis diagram rework, J2 interfaces, QSFP passive mezzanine, VTRAF rename
 69135cd  Add customer-specific module pages, J2 interfaces, passive QSFP mezzanine
@@ -543,15 +578,42 @@ beb86e2  Update session context
 ba1580c  Initial commit — SNP Product HUB (Phases 1–4)
 ```
 
-### Session 5 changes summary
-- Added Parts & Materials section with 6 new pages / 20 new routes (84 total static pages)
-- Created `src/lib/mock-parts.ts` — PartEntry, TradeStudy types, 14 mock parts, 3 trade studies, 9 utility functions, BOMSummary aggregator
-- `/parts` — searchable/filterable BOM catalog with summary cards and multi-axis toggle filters (category, termination, qualification, footprint)
-- `/parts/[partId]` — part detail with specs, usage notes, module cross-links, trade study cross-links
-- `/parts/trade-studies` — trade studies index with summaries, conclusions, affected part lists
-- `/parts/trade-studies/[studyId]` — trade study detail with conclusion card and affected parts table
-- `/parts/import` — BOM import page with CSV upload + preview, expected column format reference
-- Navbar updated: added "Parts" link, improved active state detection for sub-pages
+### Session 5 changes summary (8 modules built, 117 total pages)
+
+**Module 1: Parts & Materials** (`/parts`)
+- `mock-parts.ts` — 14 mock parts, 3 trade studies, BOMSummary aggregator
+- Searchable/filterable BOM catalog, part detail pages, trade study pages, CSV import scaffold
+
+**Module 2: Qualification & Environment** (`/qualification`)
+- `mock-qualification.ts` — 7 module qualifications, 2 mission environments, radiation/thermal/test data
+- Overview with progress bars, per-module detail pages with radiation profile, thermal profile, test matrix
+
+**Module 3: SWaP-C Dashboard** (`/swap`)
+- Interactive build selector, per-slot stacked power/weight bar charts, cross-build comparison with progress bars
+
+**Module 4: Configuration Changes** (`/changes`)
+- `mock-changes.ts` — 8 ECO/ECN/DCN records with real program history (MRAM change, VTRAF rename, pure tin approval, etc.)
+- Status/type/severity filters, timeline visualization, affected modules/builds cross-links
+
+**Module 5: Firmware & Software** (`/firmware`)
+- `mock-firmware.ts` — 11 firmware releases across 6 targets (FPGA, ARM, CMC, Crypto, Boot, PHY), per-build version matrix
+- Release detail pages with changelog, HW/build compatibility, update procedures
+
+**Module 6: Verification & Test** (`/verification`)
+- `mock-verification.ts` — 21 requirements across 6 categories (Performance, Environmental, Radiation, EMI, Safety, Power)
+- Per-category progress bars, traceability to test procedures and reports, module cross-links
+
+**Module 7: Interface Signal Map** (`/interfaces`)
+- `mock-interfaces.ts` — 14 signal paths, SpaceVPX backplane architecture (3 planes), domain/build filters
+- Visual signal path diagrams (source slot → dest slot), build-specific signal highlighting
+
+**Module 8: Assembly & Integration Guide** (`/integration`)
+- 30-step procedure across 6 phases, 10 critical checkpoints, 9 GSE equipment items
+- Phase-organized checklist with step numbers, critical badges, document references
+
+**Infrastructure:**
+- Navbar expanded to 10+ links with improved active state detection
+- All new modules follow existing conventions: shadcn/ui cards, color-coded badges, breadcrumb navigation
 
 ---
 
@@ -570,6 +632,10 @@ ba1580c  Initial commit — SNP Product HUB (Phases 1–4)
 - **BOM import persistence** — CSV preview works client-side; server-side persistence and Excel parsing via API route not yet implemented. Currently a scaffold.
 - **Parts ↔ Modules cross-link** — Module detail pages (`/modules/[id]`) don't yet show a "Parts used on this module" section. `getPartsByModule()` utility exists but is not wired to the UI.
 - **Datasheets/ vs public/datasheets/** — Working copies of PDFs exist in both `Datasheets/` (project root) and `public/datasheets/` (served). The root `Datasheets/` folder has one extra duplicate (`VPT-VSC30-2800S-Series (1).pdf`) that can be cleaned up.
+- **Navbar overflow** — 10+ links may overflow on smaller screens. Needs responsive hamburger menu or dropdown grouping.
+- **Qualification ↔ Verification overlap** — Both modules track test status. Consider merging or cross-linking: Qualification focuses on per-module environmental/rad tests, Verification focuses on requirements traceability.
+- **Mock data only** — All new modules (qualification, changes, firmware, verification, interfaces, integration) use mock data. Real data import mechanisms not yet built for these sections.
+- **Signal map is static** — `/interfaces` shows signal paths as cards. Future: interactive SVG backplane diagram with clickable slots.
 
 ---
 
