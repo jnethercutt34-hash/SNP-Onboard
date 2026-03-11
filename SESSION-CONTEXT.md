@@ -1,5 +1,5 @@
 # SNP-Onboard — Session Context
-_Last updated: 2026-03-07 (Session 4)_
+_Last updated: 2026-03-11 (Session 5)_
 
 > **For new agents:** Read this entire file before making any changes.
 > It covers the full application architecture, all data models, key conventions,
@@ -9,7 +9,7 @@ _Last updated: 2026-03-07 (Session 4)_
 
 ## 1. What This App Is
 
-An internal product onboarding and reference hub for the **SNP (Secure Network Processor)** — a ruggedized 3U SpaceVPX computing platform used in LEO and pLEO space missions. Built for engineers and customers to explore hardware configurations, compare customer builds, browse component specs/datasheets, and query an AI-powered documentation knowledge base.
+An internal product onboarding and reference hub for the **SNP (Secure Network Processor)** — a ruggedized 3U SpaceVPX computing platform used in LEO and pLEO space missions. Built for engineers and customers to explore hardware configurations, compare customer builds, browse component specs/datasheets, search a parts/materials BOM, and query an AI-powered documentation knowledge base.
 
 - **Framework:** Next.js 16.1.6, App Router, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Local path:** `C:/AI-Tools/SNP-Onboard`
@@ -30,8 +30,12 @@ An internal product onboarding and reference hub for the **SNP (Secure Network P
 | `/builds` | `src/app/builds/page.tsx` | Product lineage diagram + customer comparison grid — all builds side by side with power/weight/diff |
 | `/builds/[customerId]` | `src/app/builds/[customerId]/page.tsx` | Single build detail: chassis SVG, slot manifest, added/removed components vs baseline |
 | `/builds/[customerId]/modules/[componentId]` | `src/app/builds/[customerId]/modules/[componentId]/page.tsx` | **Customer-context module page** — shows which interfaces are active/partial/unused for that customer, alongside full base specs |
-| `/modules` | `src/app/modules/page.tsx` | Full component catalog, filterable by category |
 | `/modules/[componentId]` | `src/app/modules/[componentId]/page.tsx` | Component detail: specs table, datasheets, sub-modules, related components |
+| `/parts` | `src/app/parts/page.tsx` | **Parts & Materials catalog** — BOM table with search + multi-axis filters (category, termination, qualification, footprint), summary cards |
+| `/parts/[partId]` | `src/app/parts/[partId]/page.tsx` | **Part detail** — full specs, usage notes, linked modules, related trade studies |
+| `/parts/trade-studies` | `src/app/parts/trade-studies/page.tsx` | **Trade studies index** — all engineering analyses with summaries, conclusions, affected parts |
+| `/parts/trade-studies/[studyId]` | `src/app/parts/trade-studies/[studyId]/page.tsx` | **Trade study detail** — full summary, conclusion card, cross-linked affected parts |
+| `/parts/import` | `src/app/parts/import/page.tsx` | **BOM import** — CSV upload with preview table, expected column format reference, Excel guidance |
 | `/knowledge-base` | `src/app/knowledge-base/page.tsx` | AI Q&A — client component, calls POST /api/chat |
 | `/api/chat` | `src/app/api/chat/route.ts` | AI backend handler |
 
@@ -47,21 +51,30 @@ src/
     builds/
       page.tsx                        Product lineage diagram + customer comparison grid
       [customerId]/page.tsx           Build detail page
+      [customerId]/modules/
+        [componentId]/page.tsx        Customer-context module page
     modules/
-      page.tsx                        Component catalog
       [componentId]/page.tsx          Component detail + datasheets
+    parts/
+      page.tsx                        Parts & Materials catalog (client component)
+      [partId]/page.tsx               Part detail page (SSG)
+      trade-studies/
+        page.tsx                      Trade studies index
+        [studyId]/page.tsx            Trade study detail (SSG)
+      import/page.tsx                 BOM import page (client component)
     knowledge-base/page.tsx           AI knowledge base (client component)
     api/chat/route.ts                 AI provider routing (mock | internal | gemini)
   components/
     chassis-diagram.tsx               SVG front-panel chassis diagram
     product-lineage.tsx               SVG product lineage / flow diagram (builds page header)
     answer-card.tsx                   Knowledge base result card
-    navbar.tsx                        Site navigation bar
-    ui/                               shadcn/ui primitives (badge, button, card, etc.)
+    navbar.tsx                        Site navigation bar (Overview · Builds · Parts · Knowledge Base)
+    ui/                               shadcn/ui primitives (badge, button, card, input, etc.)
   lib/
     mock-hardware.ts                  Hardware types, component catalog, builds, utilities
     mock-components.ts                Component detail page data (specs, datasheets, related)
     customer-module-overrides.ts      Per-customer interface usage annotations (active/partial/unused)
+    mock-parts.ts                     Parts & Materials data model, BOM catalog, trade studies, utilities
     mock-ai.ts                        Mock AI responses + AiResponse interface
     document-store.ts                 Server-side document ingestion for knowledge base
     utils.ts                          cn() utility
@@ -69,6 +82,7 @@ public/
   app-icon.ico                        Desktop shortcut icon (dark navy chip, "SNP" in blue)
   datasheets/                         Real PDF datasheets served at /datasheets/*
   documents/                          Knowledge base document tree (see Section 7)
+Datasheets/                           Source PDF datasheets (working copies, also in public/datasheets/)
 ```
 
 ---
@@ -215,6 +229,14 @@ Each entry is a `ComponentDetail` object keyed by `detailId`. Contains:
 **Power rail entries:**
 `psu-rail-3v3-aux`, `psu-rail-3v3`, `psu-rail-5v`, `psu-rail-12v`
 
+**Real PDF datasheets** (in `public/datasheets/`, linked via `file:` field):
+- `Datasheet-UT32M0R500.pdf` — CAES rad-hard ARM Cortex-M0+ microcontroller (CMC)
+- `MRAM-Datasheet.pdf` — 2 Gb MRAM
+- `Quad_PHY.pdf` — Microchip VSC8504 1G Quad PHY
+- `VPT-VSC30-2800S-Series.pdf` — VPT 30W power converter (PSU Red)
+- `VPT-VSC100-2800S-Series.pdf` — VPT 100W power converter (PSU Black)
+- `VTRAF-Datasheet.pdf` — AirBorn VTRAF optical connector
+
 ---
 
 ## 7. Knowledge Base & AI (mock-ai.ts, document-store.ts, api/chat/route.ts)
@@ -290,7 +312,83 @@ public/documents/
 
 ---
 
-## 8. Chassis SVG Diagram (chassis-diagram.tsx)
+## 8. Parts & Materials (mock-parts.ts) — Session 5
+
+### Data Model
+
+#### PartEntry
+```typescript
+interface PartEntry {
+  id: string;
+  manufacturerPartNumber: string;
+  manufacturer: string;
+  description: string;
+  category: PartCategory;           // "Resistor" | "Capacitor" | "Inductor" | "Diode" | "Transistor" | "IC" | "Connector" | "Crystal/Oscillator" | "Transformer" | "Mechanical" | "Other"
+  footprint: string;                // "0402", "0603", "QFN-64", "SMA", etc.
+  packageType: string;              // "SMD", "Through-Hole", "BGA", "QFN", etc.
+  value?: string;                   // "10 kΩ", "100 nF", etc.
+  tolerance?: string;
+  voltageRating?: string;
+  powerRating?: string;
+  temperatureRange: string;
+  solderTermination: SolderTermination;  // "Pure-Tin" | "SnPb" | "Gold" | "N/A"
+  qualificationLevel: QualificationLevel; // "QML-Q" | "QML-V" | "MIL-PRF" | "COTS-Plus" | "COTS" | "TBD"
+  mitigationStrategy: MitigationStrategy;
+  tradeStudyRef?: string;           // links to TradeStudy.id
+  radiationRating?: string;
+  deratingFactor?: string;
+  usedOnModules: string[];          // detailIds from mock-components.ts
+  quantity: number;                 // qty per unit/build
+  notes?: string;
+}
+```
+
+#### TradeStudy
+```typescript
+interface TradeStudy {
+  id: string;
+  title: string;
+  documentNumber: string;
+  revision: string;
+  date: string;
+  summary: string;
+  conclusion: string;
+  affectedParts: string[];          // part IDs
+  category: "Materials" | "Derating" | "Radiation" | "Thermal" | "Reliability" | "Other";
+}
+```
+
+### Mock Data (14 parts, 3 trade studies)
+
+**Parts:** 4 resistors (0402), 5 capacitors (0402/0603/1206), 1 inductor (0603), 2 ICs (QFN-64, MSOP-8), 1 TVS diode (SMA), 1 crystal (3225)
+
+**Trade Studies:**
+- **TS-001** (Materials): Pure Tin Termination Acceptability for pLEO — ≤0603 acceptable with conformal coat, ≥0805 require SnPb
+- **TS-002** (Derating): Passive Component Derating Policy — 50% voltage, 60% power, 80% inductor saturation
+- **TS-003** (Radiation): COTS-Plus Radiation Tolerance — 50 krad(Si) TID lot testing, SEL at ≥60 MeV·cm²/mg
+
+### Utility Functions (mock-parts.ts)
+- `getPartById(id)`, `getPartsByModule(moduleDetailId)`, `getPartsByCategory(category)`
+- `getPartsByFootprint(footprint)`, `getPartsByTermination(termination)`
+- `getTradeStudyById(id)`, `getTradeStudiesForPart(partId)`, `getPartsForTradeStudy(tradeStudyId)`
+- `getBOMSummary()` — returns total unique P/Ns, total qty, breakdowns by category/termination/qualification, pure tin count & percentage
+
+### Parts Page Features
+- **Summary cards:** Unique P/Ns, total qty/unit, pure tin count + %, trade study count
+- **Multi-axis filters:** Category, solder termination, qualification level, footprint — all toggle-able with counts
+- **Search:** Part number, description, manufacturer, value
+- **Table columns:** Part description, MFR P/N, category badge, footprint, termination badge, qual badge, qty
+- **Color-coded badges:** Each category, termination type, and qualification level has a distinct color scheme
+
+### BOM Import Page
+- CSV upload with client-side preview (parses header + data rows, shows first 50 in a table)
+- Expected column reference table with required/optional markers
+- Excel guidance (server-side parsing via xlsx package when API is connected)
+- Ready for server persistence when deployed
+
+---
+
+## 9. Chassis SVG Diagram (chassis-diagram.tsx)
 
 SVG-based front-panel diagram rendered as a React server component. Each VPX slot type has its own `*Face` sub-component. Layout is computed from slot numbers.
 
@@ -321,7 +419,7 @@ SVG-based front-panel diagram rendered as a React server component. Each VPX slo
 
 ---
 
-## 9. Product Lineage Diagram (product-lineage.tsx)
+## 10. Product Lineage Diagram (product-lineage.tsx)
 
 SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SVG scales to fill container width with `style={{ width: '100%', minWidth: '720px' }}` inside an `overflow-x-auto` wrapper.
 
@@ -349,26 +447,9 @@ SVG infographic rendered at the top of `/builds`. Horizontally scrollable — SV
 - Wattage callouts: `hsl(45 80% 62%)` (amber-gold) so they pop
 - "7-slot SpaceVPX · MARCC Crypto" in Baseline: `hsl(217 55% 62%)` (mission blue)
 
-**Node content summary:**
-- FMS: amber glow, IRAD badge — 16 GB DDR4 · 2 Gb NVM · FPGA 1.5M SLC (shared), Red/Black Optical 10G each with MDM · 4× 1000Base-T sub-line, ACAM Crypto, HW & FW validation
-- Baseline: mission blue glow, PRODUCTION badge — Red/Black: 16 GB DDR4 · 1.2 TB NVMe · Optical 10G + VTRAF · Nano-D (4× 1000Base-T) · USB, 7-slot SpaceVPX · MARCC Crypto, 96 W
-- Next Gen: ghost/dashed border, roadmap placeholder
-- ABE: pLEO · 2× ACAM (Cold Spare), Red: 16 GB DDR4 · Copper 10G + VTRAF · Nano-D · USB, Black: 16 GB DDR4 · Copper 10G + 3× QSFP · Nano-D · USB, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
-- J2: pLEO · Atomic Clock, Red: **Optical** 10G + VTRAF · Nano-D · USB · RS-422 In/Out · 1PPS LVDS, Black: Copper 10G + VTRAF · Nano-D · USB · 4× 1PPS · 4× 10MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c), 103 W
-- JL: pLEO Mission, Red/Black Copper 10G + VTRAF · Nano-D · USB each, R+B: 2 Gb NVM · FPGA 1.5M SLC, 90 W
-
-**J2 node** has its own height constant `j2H = 155` (vs `custH = 110` for ABE/JL) due to extra interface callouts. The `j2.cy` uses `j2H`. The CUSTOMER VARIANTS label uses `j2H`. viewBox height is `455`.
-
-**J2 Red interfaces:** VTRAF · Nano-D · USB · 1× RS-422 In · 1× RS-422 Out · 1× 1PPS (LVDS) In · 2 Gb NVM · FPGA 1.5M SLC
-**J2 Black interfaces:** VTRAF · Nano-D · USB · 4× 1PPS · 4× 10 MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T (†backplane d/c reqd, Quad PHY per Baseline) · 2 Gb NVM · FPGA 1.5M SLC
-
-**NVM/SLC callout convention (Session 3):** Each customer variant node now shows `2 Gb NVM · FPGA 1.5M SLC` as a sub-line under **both** the Red section and the Black section separately (not a shared R+B line).
-
-**"CUSTOMER VARIANTS" label:** positioned at `y={custY + j2H + 12}` (uses j2H so it clears the tallest box)
-
 ---
 
-## 10. Builds Page Badge Logic (builds/page.tsx)
+## 11. Builds Page Badge Logic (builds/page.tsx)
 
 Three badge types:
 ```typescript
@@ -382,7 +463,7 @@ const isIrad     = build.id === "fms-irad";
 
 ---
 
-## 11. Overview Page (page.tsx) — Key Sections
+## 12. Overview Page (page.tsx) — Key Sections
 
 ### System Architecture Cards (6 cards, lg:grid-cols-3)
 1. **3U VPX Form Factor** — VITA 78, PCIe Gen 3, operating range
@@ -407,7 +488,7 @@ All 4 mezzanine cards have: **4× 10/100/1000Base-T via 51-pin Nano-D connector 
 
 ---
 
-## 12. Key Conventions & Rules
+## 13. Key Conventions & Rules
 
 ### Never Break These
 1. **No GEO** — product is LEO/pLEO only. No GEO references anywhere in UI, descriptions, or data.
@@ -426,21 +507,8 @@ All 4 mezzanine cards have: **4× 10/100/1000Base-T via 51-pin Nano-D connector 
 ### Build ID Convention
 All non-baseline, non-IRAD builds use `customer-[letter]-pleo` IDs. The badge shows `"pLEO"` for these. FMS uses `fms-irad` and gets an amber IRAD badge.
 
-### SHORT_NAME Map (builds/page.tsx)
-Maps component IDs → short display labels for badge chips:
-```typescript
-const SHORT_NAME: Record<string, string> = {
-  "gpp-universal-a":     "GPP Red",
-  "gpp-universal-b":     "GPP Black",
-  "crypto-unit":         "Crypto Unit",
-  "psu-red":             "PSU Red",
-  "psu-black":           "PSU Black",
-  "mez-optical-10g":     "Optical 10G",
-  "mez-copper-10g":      "Copper 10G",
-  "mez-qsfp-3x":         "3× QSFP",
-  "timing-atomic-clock": "Atomic Clock",
-}
-```
+### Navbar
+Four links: Overview · Builds · Parts · Knowledge Base. Active state uses `pathname.startsWith(href)` for sub-page highlighting (except `/` which uses exact match).
 
 ### next.config.ts serverExternalPackages
 ```typescript
@@ -449,7 +517,7 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 
 ---
 
-## 13. Dependencies
+## 14. Dependencies
 
 ### Production
 `next@16.1.6`, `react@19.2.3`, `react-dom@19.2.3`, `openai@^6.25.0`, `mammoth@^1.11.0`, `xlsx@^0.18.5`, `pdf-parse@^2.4.5`, `lucide-react`, `radix-ui`, `clsx`, `tailwind-merge`, `class-variance-authority`
@@ -459,40 +527,35 @@ serverExternalPackages: ["pdf-parse", "mammoth", "xlsx"]
 
 ---
 
-## 14. Git Commit History
+## 15. Git Commit History
 
 ```
-(this session)   Update session context (Session 4)
-beb86e2          Update session context (Session 3)
-6357cf0          Add FMS IRAD build and product lineage diagram
-15b398e          Update session context + fix pdf-parse production dependency
-8987e2f          Add SESSION-CONTEXT.md for future agent onboarding
-53625d5          Add AI knowledge base integration, GEO removal, new mezzanine, and document store
+7e98c74  Add Parts & Materials section with BOM catalog, trade studies, and import scaffold (Session 5)
+d313c8d  Session 4: 1-indexed slots, chassis diagram rework, J2 interfaces, QSFP passive mezzanine, VTRAF rename
+69135cd  Add customer-specific module pages, J2 interfaces, passive QSFP mezzanine
+0c95d6a  Update session context and product lineage, overview, desktop shortcut
+beb86e2  Update session context
+6357cf0  Add FMS IRAD build and product lineage diagram
+15b398e  Update session context + fix pdf-parse production dependency
+8987e2f  Add SESSION-CONTEXT.md for future agent onboarding
+53625d5  Add AI knowledge base integration, GEO removal, new mezzanine, and document store
+51e40ee  Add component detail pages, chassis diagram, and clickable navigation
+ba1580c  Initial commit — SNP Product HUB (Phases 1–4)
 ```
 
-### Session 4 changes summary
-- Chassis diagram: all dark text fills brightened to readable colors (#6b7280, #5b8fa8, #4b5563)
-- Chassis diagram: connector label y-positions fixed to sit just below each connector
-- Slot numbering changed from 0–6 to 1–7 throughout (mock-hardware.ts, chassis-diagram.tsx)
-- J2 CSAC moved to slot 3 (adjacent to GPP Red at slot 4)
-- Dynamic slot layout text below chassis diagram (replaces hardcoded string)
-- VTRAF renamed from VTRFA everywhere (all source files)
-- Dual-channel → quad-channel everywhere except ABE Black (3× QSFP, 3 of 4 lanes)
-- "Not Included vs Baseline" text: improved contrast (text-foreground/60 + line-through)
-- J2 product lineage: Red switched to Optical 10G (was Copper), added RS-422/1PPS interfaces
-- J2 product lineage: Black added 4× 1PPS · 4× 10MHz · 4× 2.5GBase-T · 4× 100Base-T · 2× 1000Base-T
-- ABE Black connector line: "3× QSFP · 2× 100Base-T · USB"
-- NVM/SLC split into per-Red and per-Black sub-lines in each customer variant node
-- Added 10G QSFP Passive XMC mezzanine (mock-components.ts, overview page)
-- Added customer-module-overrides.ts with per-customer interface usage annotations
-- Added /builds/[customerId]/modules/[componentId] customer-context module page
-- Mezzanine links in build detail page route to customer-specific module pages
-- Power callout added to FMS lineage box; J2 103 W text moved down to avoid overlap
-- 4× 1000Base-T via Nano-D added to all mezzanine cards and module pages
+### Session 5 changes summary
+- Added Parts & Materials section with 6 new pages / 20 new routes (84 total static pages)
+- Created `src/lib/mock-parts.ts` — PartEntry, TradeStudy types, 14 mock parts, 3 trade studies, 9 utility functions, BOMSummary aggregator
+- `/parts` — searchable/filterable BOM catalog with summary cards and multi-axis toggle filters (category, termination, qualification, footprint)
+- `/parts/[partId]` — part detail with specs, usage notes, module cross-links, trade study cross-links
+- `/parts/trade-studies` — trade studies index with summaries, conclusions, affected part lists
+- `/parts/trade-studies/[studyId]` — trade study detail with conclusion card and affected parts table
+- `/parts/import` — BOM import page with CSV upload + preview, expected column format reference
+- Navbar updated: added "Parts" link, improved active state detection for sub-pages
 
 ---
 
-## 15. Known Issues / Pending Work
+## 16. Known Issues / Pending Work
 
 - **pdf-parse v2.4.5** — atypical version (npm latest is 1.1.1). Moved to production deps. If PDF parsing fails, verify with `node -e "require('pdf-parse')"`.
 - **Document ingestion cache** — In-memory only. Restart dev server to pick up newly dropped documents.
@@ -504,10 +567,13 @@ beb86e2          Update session context (Session 3)
 - **mock-hardware.ts memory** — SESSION-CONTEXT says 2 Gb MRAM but code may still reference "NVM Flash". Verify and update `mock-hardware.ts` / `mock-components.ts` to use MRAM terminology.
 - **CopperFace chassis SVG** — still shows "10GBASE-T · DUAL" label; should say QUAD to match naming convention change.
 - **QSFP passive** — `mez-qsfp-passive` has no hardware catalog entry in mock-hardware.ts (only in mock-components.ts); no build uses it yet.
+- **BOM import persistence** — CSV preview works client-side; server-side persistence and Excel parsing via API route not yet implemented. Currently a scaffold.
+- **Parts ↔ Modules cross-link** — Module detail pages (`/modules/[id]`) don't yet show a "Parts used on this module" section. `getPartsByModule()` utility exists but is not wired to the UI.
+- **Datasheets/ vs public/datasheets/** — Working copies of PDFs exist in both `Datasheets/` (project root) and `public/datasheets/` (served). The root `Datasheets/` folder has one extra duplicate (`VPT-VSC30-2800S-Series (1).pdf`) that can be cleaned up.
 
 ---
 
-## 16. Session Trigger
+## 17. Session Trigger
 
 When the user types **"End of Session"**, always:
 1. Overwrite this file (`SESSION-CONTEXT.md`) with the latest state
